@@ -3,7 +3,7 @@
         'name' => 'obrasoft/backend',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '1b5fd390e6960469e0ded7c714b5f283dcd1be81',
+        'reference' => '7e26d7f1f203dea6a53a3122cf4d4908ef92c9d5',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -31,7 +31,7 @@
         'obrasoft/backend' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '1b5fd390e6960469e0ded7c714b5f283dcd1be81',
+            'reference' => '7e26d7f1f203dea6a53a3122cf4d4908ef92c9d5',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

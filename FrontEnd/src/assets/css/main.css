@@ -59,7 +59,6 @@ body {
   transition:
     margin-left 0.32s cubic-bezier(0.2, 0.9, 0.2, 1),
     padding-top 0.28s ease;
-  /* Dejar espacio suficiente para el header y el stats-section fijo */
   padding-top: calc(var(--header-height) + 170px);
 }
 /* Header Styles */
@@ -302,18 +301,6 @@ body {
   font-weight: 500;
 }
 
-.stats-section {
-  position: fixed;
-  top: var(--header-height);
-  left: calc(var(--sidebar-width) + 1rem);
-  right: 1rem;
-  z-index: 950;
-  background: #f5f7fa;
-  padding: 0.8rem 1rem;
-  margin-top: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
 @media (max-width: 992px) {
   .stats-section {
     left: 1rem;
@@ -324,6 +311,43 @@ body {
 
 @media (max-width: 768px) {
   .stats-section {
+    left: 0.5rem;
+    right: 0.5rem;
+    padding: 0.6rem;
+  }
+}
+
+.stats-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  position: fixed;
+  top: var(--header-height);
+  left: calc(var(--sidebar-width) + 1rem);
+  right: 1rem;
+  background: #f5f7fa;
+  padding: 0.8rem 1rem;
+  margin-top: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  margin-top: 10px;
+  padding: 30px 20px;
+  background: --primary-color;
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(1.7px);
+  -webkit-backdrop-filter: blur(1.7px);
+  border: 1px solid rgba(70, 217, 205, 0.23);
+}
+
+@media (max-width: 992px) {
+  .stats-body {
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-body {
     left: 0.5rem;
     right: 0.5rem;
     padding: 0.6rem;
@@ -721,6 +745,15 @@ body {
 
 /* Estadísticas */
 .stats-section {
+  position: fixed;
+  top: var(--header-height);
+  left: calc(var(--sidebar-width) + 1rem);
+  right: 1rem;
+  z-index: 950;
+  background: #f5f7fa;
+  padding: 0.8rem 1rem;
+  margin-top: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   margin-top: 10px;
   padding: 30px 20px;
   background: --primary-color;
@@ -797,4 +830,11 @@ body {
   transition:
     padding-top 0.28s ease,
     margin-left 0.32s ease;
+}
+
+.parent {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 8px;
 }
