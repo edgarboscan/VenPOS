@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Servicio Autónomo Hospital Universitario de Maracaibo" />
+  <meta name="author" content="Ing. Edgar Boscan">
+  <meta name="robots" content="index, follow">
+  <title>404 - Página no encontrada</title>
+  <link rel="icon" href=".././assets/img/logo.png" type="image/png" />
+  <link rel="stylesheet" href="../../node_modules/normalize.css/normalize.css" />
+  <link rel="stylesheet" href="../../node_modules/bootstrap/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="../../node_modules/animate.css/animate.css" />
+  <link rel="stylesheet" href=".././assets/css/styles.css" />
+  <style>a
+    :root {
+      --bg-1: #f6f7fb;
+      --bg-2: #eef2ff;
+      --accent: #ff6b6b;
+      --muted: #6c757d;
+      --card: #ffffff;
+      --glass: rgba(255, 255, 255, 0.7);
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0
+    }
+
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(120deg, var(--bg-1) 0%, var(--bg-2) 50%, #fef3f3 100%);
+      overflow: hidden;
+    }
+
+    /* animated gradient subtle movement */
+    @keyframes bgShift {
+      0% {
+        background-position: 0% 50%
+      }
+
+      50% {
+        background-position: 100% 50%
+      }
+
+      100% {
+        background-position: 0% 50%
+      }
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(60deg, rgba(255, 107, 107, 0.06), rgba(99, 102, 241, 0.06));
+      mix-blend-mode: overlay;
+      pointer-events: none;
+      animation: bgShift 12s linear infinite;
+      background-size: 200% 200%;
+    }
+
+    .error-container {
+      background: linear-gradient(180deg, var(--card), var(--glass));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 48px 36px;
+      max-width: 560px;
+      width: calc(100% - 32px);
+      text-align: center;
+      transform: translateY(-6px);
+      animation: popIn 600ms cubic-bezier(.2, .9, .3, 1) both;
+      position: relative;
+      overflow: visible;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(.98)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1)
+      }
+    }
+
+    .error-code {
+      font-size: 6.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin: 0 0 .25rem;
+      line-height: 1;
+      letter-spacing: 2px;
+      display: inline-block;
+      padding: .2rem .6rem;
+      border-radius: 10px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.2));
+      box-shadow: 0 6px 18px rgba(255, 107, 107, 0.08);
+      transform-origin: center center;
+      animation: codePulse 2.4s infinite;
+    }
+
+    @keyframes codePulse {
+      0% {
+        transform: scale(1)
+      }
+
+      50% {
+        transform: scale(1.03)
+      }
+
+      100% {
+        transform: scale(1)
+      }
+    }
+
+    .error-title {
+      font-size: 1.6rem;
+      color: #1f2937;
+      margin: .6rem 0 .2rem
+    }
+
+    .error-message {
+      color: var(--muted);
+      font-size: 1rem;
+      margin-bottom: 1.6rem
+    }
+
+    .illustration {
+      margin: 18px auto 22px;
+      display: block;
+      width: 140px;
+      height: 84px
+    }
+
+    .illustration svg {
+      width: 100%;
+      height: 100%;
+      display: block
+    }
+
+    /* animate parts of svg via CSS */
+    .face-eye {
+      transform-origin: 50% 50%;
+      animation: blink 5s infinite
+    }
+
+    @keyframes blink {
+      0% {
+        transform: scaleY(1)
+      }
+
+      2% {
+        transform: scaleY(.1)
+      }
+
+      4% {
+        transform: scaleY(1)
+      }
+    }
+
+    .arm-left,
+    .arm-right {
+      transform-origin: 50% 50%;
+      animation: swing 3s ease-in-out infinite
+    }
+
+    .arm-right {
+      animation-delay: .2s
+    }
+
+    @keyframes swing {
+      0% {
+        transform: rotate(0deg)
+      }
+
+      50% {
+        transform: rotate(6deg)
+      }
+
+      100% {
+        transform: rotate(0deg)
+      }
+    }
+
+    .btn-home {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      padding: .7rem 1.8rem;
+      border-radius: 10px;
+      border: 0;
+      font-weight: 600;
+      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.14);
+      transition: transform .16s ease, box-shadow .16s ease
+    }
+
+    .btn-home:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(255, 107, 107, 0.18)
+    }
+
+    /* small decorative bubbles */
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      opacity: .12;
+      background: var(--accent);
+      filter: blur(8px)
+    }
+
+    .bubble.b1 {
+      width: 120px;
+      height: 120px;
+      right: -40px;
+      top: -40px
+    }
+
+    .bubble.b2 {
+      width: 60px;
+      height: 60px;
+      left: -30px;
+      bottom: -30px
+    }
+
+    @media(max-width:600px) {
+      .error-container {
+        padding: 28px 18px
+      }
+
+      .error-code {
+        font-size: 4rem
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="error-container">
+    <!-- <img src="./../assets/img/logo.png" alt="Logo SAHUM" width="60" height="60" style="margin-bottom: 1rem;" /> -->
+    <div class="error-code">404</div>
+    <h1 class="error-title">¡Ups! Página no encontrada</h1>
+    <p class="error-message">
+      Lo sentimos, la página que buscas no existe o ha sido movida.<br>
+      Por favor, verifica la URL o vuelve al inicio.
+    </p>
+    <div class="bubble b1" aria-hidden="true"></div>
+    <div class="bubble b2" aria-hidden="true"></div>
+
+    <div class="illustration" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 300" role="img" aria-label="Ilustración 404">
+        <g transform="translate(0,0)">
+          <circle cx="250" cy="150" r="120" fill="#fbfbfe" stroke="#ffdede" stroke-width="8" />
+          <g class="face">
+            <circle class="face-eye" cx="210" cy="120" r="10" fill="#333" />
+            <circle class="face-eye" cx="290" cy="120" r="10" fill="#333" />
+            <path d="M210 170 Q250 190 290 170" stroke="#333" stroke-width="5" fill="none" />
+          </g>
+          <g class="arms">
+            <path class="arm-left" d="M180 80 L150 50" stroke="#ff6b6b" stroke-width="8" stroke-linecap="round" />
+            <path class="arm-right" d="M320 80 L350 50" stroke="#ff6b6b" stroke-width="8" stroke-linecap="round" />
+            <path class="arm-left" d="M180 220 L150 250" stroke="#ff6b6b" stroke-width="8" stroke-linecap="round" />
+            <path class="arm-right" d="M320 220 L350 250" stroke="#ff6b6b" stroke-width="8" stroke-linecap="round" />
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <a href="../../index.php" class="btn-home" aria-label="Volver al inicio">Volver al inicio</a>
+  </main>
+</body>
+
+</html>

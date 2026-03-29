@@ -1,0 +1,67 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Listen for Xdebug",
+      "type": "php",
+      "request": "launch",
+      "port": 9003,
+      "runtimeExecutable": "c:\\xampp\\php\\php.exe",
+      "runtimeArgs": ["-S", "localhost:8000", "-t", "."],
+      "cwd": "${workspaceFolder}",
+      "ignore": ["**/vendor/**/*.php"],
+      "env": {
+        "XDEBUG_MODE": "debug,develop"
+      }
+    },
+    {
+      "name": "Launch Chrome against localhost",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:8000",
+      "webRoot": "${workspaceFolder}",
+      "runtimeArgs": [
+        "--remote-debugging-port=9222",
+        "--disable-session-crashed-bubble",
+        "--disable-infobars"
+      ],
+      "sourceMaps": true,
+      "trace": true,
+      "smartStep": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "timeout": 30000,
+      "presentation": {
+        "hidden": false,
+        "group": "Chrome",
+        "order": 1
+      }
+    },
+    {
+      "name": "Launch Edge against localhost",
+      "type": "edge",
+      "request": "launch",
+      "url": "http://localhost:8000",
+      "webRoot": "${workspaceFolder}",
+      "userDataDir": "${workspaceFolder}/.vscode/edge-profile"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug PHP + JS (Chrome)",
+      "configurations": [
+        "Listen for Xdebug",
+        "Launch Chrome against localhost"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "hidden": false,
+        "group": "Compounds",
+        "order": 1
+      }
+    },
+    {
+      "name": "Debug PHP + JS (Edge)",
+      "configurations": ["Listen for Xdebug", "Launch Edge against localhost"]
+    }
+  ]
+}

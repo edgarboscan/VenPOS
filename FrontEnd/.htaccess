@@ -1,0 +1,2 @@
+# Opcional para despliegue del frontend si se sirve vía Apache
+ErrorDocument 404 /OBRASOFT-/frontend/src/404.html

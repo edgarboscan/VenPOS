@@ -1,0 +1,47 @@
+{
+  "php.suggest.basic": true,
+  "explorer.compactFolders": true,
+  "editor.formatOnSave": true,
+  "files.autoSave": "afterDelay",
+  "terminal.integrated.suggest.enabled": true,
+  "editor.fontFamily": "JetBrains Mono",
+  "editor.codeLensFontFamily": "JetBrains Mono",
+  "debug.javascript.usePreview": false,
+  "editor.defaultFormatter": null,
+  "editor.wordWrap": "on",
+  "editor.mouseWheelZoom": true,
+  "editor.formatOnPaste": false,
+  "editor.minimap.autohide": "mouseover",
+  "diffEditor.codeLens": true,
+  "explorer.fileNesting.enabled": true,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/flutter/ephemeral": true,
+    "**/Flutter/ephemeral": true,
+    "**/.symlinks": true,
+    "**/.plugin_symlinks": true,
+    "intervnciones": true,
+    "KARDEX": true,
+    "RED-MED": true,
+    "RRHH": false,
+    "RRHH/Gdola": false,
+    "RRHH/Admin": true,
+    "RRHH/Chequeo": true,
+    "sigemed": true,
+    "BIBLIO-MED": true,
+    "HEALTH": false,
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[php]": {
+    "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
