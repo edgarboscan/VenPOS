@@ -41,7 +41,7 @@ CREATE TABLE `usuarios` (
   UNIQUE KEY `email` (`email`),
   KEY `idx_email` (`email`),
   KEY `idx_activo` (`activo`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -50,7 +50,7 @@ CREATE TABLE `usuarios` (
 
 LOCK TABLES `usuarios` WRITE;
 /*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
-INSERT INTO `usuarios` VALUES (1,'V-12345678','Admin','Sistema','$2y$12$qW6cG.qtQaRYJZJlQONPh.osxuK1DTUk6sesmZCkfv3e89C18cAIm',NULL,'admin@sistema.com',NULL,1,'2026-02-26 17:15:08','2026-02-26 23:54:13'),(4,'13301699','Edgar','Boscan','$2y$10$okSkERYOlQEvHHMr63jbJOG1pVR9PnFl1HRUbvTKMkRAfiIAlB.ly','04246853071','edgarboscan@gmail.com','https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=Jameson',1,'2026-02-27 15:55:43','2026-02-27 19:07:28');
+INSERT INTO `usuarios` VALUES (1,'V-12345678','Admin','Sistema','$2y$12$qW6cG.qtQaRYJZJlQONPh.osxuK1DTUk6sesmZCkfv3e89C18cAIm',NULL,'admin@sistema.com',NULL,1,'2026-02-26 17:15:08','2026-02-26 23:54:13'),(4,'13301699','Edgar','Boscan','$2y$10$okSkERYOlQEvHHMr63jbJOG1pVR9PnFl1HRUbvTKMkRAfiIAlB.ly','04246853071','edgarboscan@gmail.com','https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=Jameson',1,'2026-02-27 15:55:43','2026-02-27 19:07:28'),(6,'V-99999999','Vendedor','Uno','$2y$10$ejemploHashAqui','0412-0000000','vendedor1@example.com',NULL,1,'2026-03-30 19:45:52','2026-03-30 19:45:52');
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -63,4 +63,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-29 18:27:08
+-- Dump completed on 2026-03-31 19:38:38

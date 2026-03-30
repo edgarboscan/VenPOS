@@ -467,3 +467,4 @@ BackEnd/vendor/composer/installed.php
 BackEnd/vendor/composer/InstalledVersions.php
 BackEnd/vendor/composer/LICENSE
 BackEnd/vendor/composer/platform_check.php
+.vscode/launch.json

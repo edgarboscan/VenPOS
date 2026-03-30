@@ -8,13 +8,15 @@ class LoginManager {
     this.notice = document.querySelector(".notice");
     this.eye = document.querySelector(".eye");
     this.pass = document.getElementById("password");
+
     this.BASE_URL =
       document.querySelector('meta[name="base-url"]')?.content || "";
+
+    const URL =
+      window.location.href.includes(this.BASE_URL) ? this.BASE_URL : "";
+    this.BASE_URL = URL;
     this.CSRF_TOKEN = null;
-    this.seguridad = [];
-    this.general = [];
-    this.conf = [];
-    this.confGen = [];
+
     this.form = $("#loginForm");
     this.noticeArea = $(".notice");
     this.verificationArea = $("#verificationArea");
@@ -24,46 +26,7 @@ class LoginManager {
 
   async init() {
     // Cargar configuraciones de seguridad y generales
-    const url =
-      window.location.href.includes(this.BASE_URL) ? this.BASE_URL : "";
-    const conf = await Utils.getConfig(url, "seguridad");
-    const confGen = await Utils.getConfig(url, "general");
-
-    // Validar que se hayan cargado las configuraciones correctamente
-    if (!conf || !confGen) {
-      this.showNotice(
-        "error",
-        "Error al cargar la configuración. Por favor, inténtelo de nuevo más tarde.",
-      );
-    } else {
-      try {
-        conf.forEach((element) => {
-          var json = {
-            nombre: element.clave,
-            valor: element.valor,
-            tipo: element.tipo,
-          };
-
-          this.seguridad.push(json);
-        });
-      } catch (error) {
-        this.showNotice(
-          "error",
-          "Error al procesar la configuración de seguridad. Por favor, inténtelo de nuevo más tarde.",
-        );
-      }
-    }
-
-    confGen.forEach((element) => {
-      var json = {
-        nombre: element.clave,
-        valor: element.valor,
-        tipo: element.tipo,
-      };
-
-      this.general.push(json);
-    });
-
+    await Utils.getAll_Config(this.BASE_URL);
     this.initEventListeners();
   }
 
@@ -247,7 +210,7 @@ class LoginManager {
           if (data.redirect) {
             window.location.href = data.redirect;
           } else {
-            window.location.href = "src/pages/home.php";
+            window.location.href = "src/pages/home.php?title=Home";
           }
         }, 700);
       } else {
@@ -274,7 +237,7 @@ class LoginManager {
 
   verifyPassword(password) {
     let errors = [];
-    this.seguridad.forEach((config) => {
+    Utils.seguridad.forEach((config) => {
       if (config.nombre === "longitud_minima_password" && config.valor > "0") {
         if (password.length < parseInt(config.valor)) {
           errors.push(

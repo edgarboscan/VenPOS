@@ -29,7 +29,7 @@ CREATE TABLE `menus` (
   `nombre` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `url` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `icono` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `tipo_icono` enum('icon','font') COLLATE utf8mb4_unicode_ci DEFAULT 'icon',
+  `tipo_icono` enum('icon','symbol') COLLATE utf8mb4_unicode_ci DEFAULT 'symbol',
   `padre_id` int DEFAULT NULL,
   `orden` int DEFAULT '0',
   `nivel` int DEFAULT '0',
@@ -41,7 +41,7 @@ CREATE TABLE `menus` (
   KEY `idx_activo` (`activo`),
   KEY `idx_orden` (`orden`),
   CONSTRAINT `menus_ibfk_1` FOREIGN KEY (`padre_id`) REFERENCES `menus` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -50,7 +50,7 @@ CREATE TABLE `menus` (
 
 LOCK TABLES `menus` WRITE;
 /*!40000 ALTER TABLE `menus` DISABLE KEYS */;
-INSERT INTO `menus` VALUES (1,'Home','./home.php','home','icon',NULL,1,0,1,'2026-02-12 14:46:32','2026-03-29 05:28:26');
+INSERT INTO `menus` VALUES (1,'Home','./home.php','home','symbol',NULL,1,0,1,'2026-02-12 14:46:32','2026-03-30 22:05:53'),(2,'Pos','./pos.php','point_of_sale','symbol',NULL,2,0,1,'2026-03-30 22:01:24','2026-03-30 22:05:53'),(3,'Compras',NULL,'local_mall','symbol',NULL,3,0,1,'2026-03-30 22:05:53','2026-03-30 22:12:11'),(4,'Compras','./compras/index.php','local_mall','symbol',3,1,1,1,'2026-03-30 22:07:14','2026-03-31 02:39:09'),(5,'Proveedores','./compras/proveedores.php','diversity_3','symbol',3,2,1,1,'2026-03-30 22:12:11','2026-03-31 02:39:09'),(6,'CxP','./compras/cxp.php','paid','symbol',3,3,1,1,'2026-03-30 22:12:11','2026-03-31 02:39:09'),(7,'Reportes','./compras/reportes.php','receipt_long','symbol',3,4,1,1,'2026-03-30 22:12:11','2026-03-31 02:39:09'),(8,'Inventario',NULL,'inventory','symbol',NULL,4,0,1,'2026-03-31 01:26:57','2026-03-31 01:26:57'),(9,'Stock','./Inventario/index.php','inventory_2','symbol',8,1,1,1,'2026-03-31 02:17:52','2026-03-31 02:39:09'),(10,'Productos','./inventario/productos.php','stockpot','symbol',8,2,1,1,'2026-03-31 02:17:52','2026-03-31 02:39:09'),(11,'Ajuste','./inventario/ajustes.php','box_add','symbol',8,3,1,1,'2026-03-31 02:17:52','2026-03-31 02:39:09'),(12,'Cargo/Descargo','./intouts.php','box_add','symbol',8,4,1,1,'2026-03-31 02:17:52','2026-03-31 02:39:09');
 /*!40000 ALTER TABLE `menus` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -63,4 +63,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-29 18:27:08
+-- Dump completed on 2026-03-31 19:38:40

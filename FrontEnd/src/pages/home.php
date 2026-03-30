@@ -1,17 +1,16 @@
 ﻿<?php
-$base = __DIR__ . '/..';
+// $base = __DIR__ . '/..';
+$base = __DIR__;
+
 require '../utils/auth.php';
 require '../utils/curl.php';
 
 require_login();
+
 $user = getCurrentUser();
 
 $currentPage = $_SERVER['PHP_SELF'] ?? basename(__FILE__);
 
-
-// Verificar si el producto existe y está activo
-
-//$pS = $stmtS->fetch();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -24,7 +23,6 @@ $currentPage = $_SERVER['PHP_SELF'] ?? basename(__FILE__);
     <!-- Base URL para construir rutas desde JS -->
     <meta name="base-url" content="/VenPOS">
 
-    <meta name="base-url" content="/VenPOS">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -34,116 +32,162 @@ $currentPage = $_SERVER['PHP_SELF'] ?? basename(__FILE__);
     <link rel="stylesheet" href="../../node_modules/sweetalert2/dist/sweetalert2.css" media="print"
         onload="this.media='all'">
     <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/sidebar-submenu.css">
     <link rel="stylesheet" href="../../node_modules/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css"
         media="print" onload="this.media='all'">
+
+    <link rel="apple-touch-icon" sizes="57x57" href="../assets/img/icons/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="../assets/img/icons/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="../assets/img/icons/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/icons/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="../assets/img/icons/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="../assets/img/icons/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="../assets/img/icons/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="../assets/img/icons/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/img/icons/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="../assets/img/icons/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="../assets/img/icons/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/img/icons/favicon-16x16.png">
+    <link rel="manifest" href="../assets/img/icons/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="../assets/img/icons/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+
 </head>
 
 <body class="h-100 w-100 app-page">
 
     <!-- Header -->
-
     <?php include '../components/header.php'; ?>
 
     <!-- Sidebar -->
-
     <?php include '../components/menu.php'; ?>
 
     <!-- Main Content -->
     <div class="app-layout">
-        <main class="full-box">
-            <section class="app-main">
-                <div class="container-fluid">
+        <section class="app-main">
+            <div class="container-fluid">
+                <div class="row">
+
                     <!-- Estadísticas -->
                     <section class="stats-section" aria-label="Estadísticas de compras y ventas del día">
-
                         <div class="stats-container">
-                            <div class="stat-card" aria-label="Ventas Totales Mes" style="background-color: var(--color-programada-light);">
-
-                                <h3 id="vTotal"><?= $ifoStat['ventas_totales'] ?? 0 ?></h3>
-                                <p>Ventas Total (MES)</p>
+                            <div class="stat-card stat-card-sales" aria-label="Ventas Totales Mes">
+                                <div class="real-content" style="display: none;">
+                                    <h3 id="vTotal"><?= number_format($infoStat['ventas_totales'] ?? 0, 0, ',', '.') ?></h3>
+                                    <p>Ventas Total (MES)</p>
+                                </div>
+                                <div class="skeleton-content">
+                                    <div class="skeleton skeleton-text" style="height: 2.5rem; width: 80%; margin: 0 auto 0.5rem;"></div>
+                                    <div class="skeleton skeleton-text" style="width: 60%; margin: 0 auto;"></div>
+                                </div>
                             </div>
 
-                            <div class="stat-card" style="background-color: var(--color-en-curso-light);" aria-label="Compras totales Mes">
-                                <h3 id="cTotal"><?= $ifoStat['compras_totales'] ?? 0 ?></h3>
-                                <p>Compras Total (MES)</p>
+                            <div class="stat-card stat-card-purchases" aria-label="Compras totales Mes">
+
+                                <div class="real-content" style="display: none;">
+                                    <h3 id="cTotal"><?= number_format($infoStat['compras_totales'] ?? 0, 0, ',', '.') ?></h3>
+                                    <p>Compras Total (MES)</p>
+                                </div>
+                                <div class="skeleton-content">
+                                    <div class="skeleton skeleton-text" style="height: 2.5rem; width: 80%; margin: 0 auto 0.5rem;"></div>
+                                    <div class="skeleton skeleton-text" style="width: 60%; margin: 0 auto;"></div>
+                                </div>
                             </div>
 
-                            <div class="stat-card" style="background-color: var(--color-omitida-light);" aria-label="Stock de productos">
-                                <h3 id="sTotal"><?= $ifoStat['stock_total'] ?? 0 ?></h3>
-                                <p>Stock de Productos</p>
+                            <div class="stat-card stat-card-stock" aria-label="Stock de productos">
+                                <div class="real-content" style="display: none;">
+                                    <h3 id="sTotal"><?= number_format($infoStat['stock_total'] ?? 0, 0, ',', '.') ?></h3>
+                                    <p>Stock de Productos</p>
+                                </div>
+                                <div class="skeleton-content">
+                                    <div class="skeleton skeleton-text" style="height: 2.5rem; width: 80%; margin: 0 auto 0.5rem;"></div>
+                                    <div class="skeleton skeleton-text" style="width: 60%; margin: 0 auto;"></div>
+                                </div>
                             </div>
 
-                            <div class="stat-card" style="background-color: var(--color-emergencia-light  );" aria-label="Alertas de reabastecimiento">
-                                <h3 id="aReabastecimiento"><?= $ifoStat['alertas_reabastecimiento'] ?? 0 ?></h3>
-                                <p>Alertas</p>
+                            <div class="stat-card stat-card-alerts" aria-label="Alertas de reabastecimiento">
+                                <div class="real-content" style="display: none;">
+                                    <h3 id="aReabastecimiento"><?= $infoStat['alertas_reabastecimiento'] ?? 0 ?></h3>
+                                    <p>Alertas</p>
+                                </div>
+                                <div class="skeleton-content">
+                                    <div class="skeleton skeleton-text" style="height: 2.5rem; width: 80%; margin: 0 auto 0.5rem;"></div>
+                                    <div class="skeleton skeleton-text" style="width: 60%; margin: 0 auto;"></div>
+                                </div>
                             </div>
-
                         </div>
-                        <div class="stats-body">
-                            <div class="parent">
-                                <div class="div1">
-                                    <div class="stats-chart" aria-label="Gráfica de ventas y compras del mes">
-                                        <canvas id="ventasComprasChart" aria-hidden="true"></canvas>
-                                    </div>
-                                </div>
-                                <div class="div2">
-                                    <div class="stats-chart" aria-label="Gráfica de ventas por producto del mes Top 5">
-                                        <canvas id="topProductosChart" aria-hidden="true"></canvas>
-                                    </div>
-                                </div>
-                                <div class="div3">
-                                    <table class="table caption-top">
-                                        <caption>List of users</caption>
-                                        <thead>
-                                            <tr>
-                                                <th scope="col">#</th>
-                                                <th scope="col">First</th>
-                                                <th scope="col">Last</th>
-                                                <th scope="col">Handle</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <th scope="row">1</th>
-                                                <td>Mark</td>
-                                                <td>Otto</td>
-                                                <td>@mdo</td>
-                                            </tr>
-                                            <tr>
-                                                <th scope="row">2</th>
-                                                <td>Jacob</td>
-                                                <td>Thornton</td>
-                                                <td>@fat</td>
-                                            </tr>
-                                            <tr>
-                                                <th scope="row">3</th>
-                                                <td>Larry</td>
-                                                <td>the Bird</td>
-                                                <td>@twitter</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>/div>
-                                    <div class="div4">4</div>
-                                </div>
-
-
-
-                            </div>
                     </section>
 
+                    <!-- Gráficos -->
+                    <section class="charts-section" aria-label="Gráficos de ventas y compras del mes">
+                        <div class="charts-container">
+                            <div class="chart-card one" aria-label="Gráfico de Ventas del Mes">
+                                <h4>Ventas del Mes</h4>
+                                <div class="d-flex justify-content-end mb-2">
+                                    <button class="btn btn-sm btn-outline-secondary export-pdf-btn" data-chart="ventasChart"><i class="fas fa-file-pdf"></i> PDF</button>
+                                </div>
+                                <div class="real-content" style="display: none;">
+                                    <canvas id="ventasChart"></canvas>
+                                </div>
+                                <div class="skeleton-content">
+                                    <div class="skeleton skeleton-chart"></div>
+                                </div>
+                            </div>
+                            <div class="chart-card two" aria-label="Gráfico de Compras del Mes">
+                                <h4>Compras del Mes</h4>
+                                <div class="d-flex justify-content-end mb-2">
+                                    <button class="btn btn-sm btn-outline-secondary export-pdf-btn" data-chart="ventasChart"><i class="fas fa-file-pdf"></i> PDF</button>
+                                </div>
+                                <div class="real-content" style="display: none;">
+                                    <canvas id="comprasChart"></canvas>
+                                </div>
+                                <div class="skeleton-content">
+                                    <div class="skeleton skeleton-chart"></div>
+                                </div>
+                            </div>
+
+                            <div class="chart-card three" aria-label="Pedidos de compras pendiente del mes">
+                                <h4>Pedidos de Compras Pendientes</h4>
+                                <div class="d-flex justify-content-end mb-2">
+                                    <button class="btn btn-sm btn-outline-secondary export-pdf-btn" data-chart="ventasChart"><i class="fas fa-file-pdf"></i> PDF</button>
+                                </div>
+                                <div class="real-content" style="display: none;">
+                                    <canvas id="pedidosChart"></canvas>
+                                </div>
+                                <div class="skeleton-content">
+                                    <div class="skeleton skeleton-chart"></div>
+                                </div>
+                            </div>
+
+                            <div class="chart-card four" aria-label="Estado de inventario del mes">
+                                <h4>Estado de Inventario</h4>
+                                <div class="real-content" style="display: none;">
+                                    <canvas id="inventarioChart"></canvas>
+                                </div>
+                                <div class="skeleton-content">
+                                    <div class="skeleton skeleton-chart"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
-            </section>
-        </main>
+            </div>
+        </section>
     </div>
+
     <script src="../../node_modules/jquery/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
+    <script src="../assets/js/app.js"></script>
     <script src="../assets/js/utils.js"></script>
     <script src="../assets/js/validators.js"></script>
     <script src="../assets/js/home.js"></script>
     <script src="../../node_modules/sweetalert2/dist/sweetalert2.all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../../node_modules/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 </body>
 

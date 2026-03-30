@@ -2,7 +2,7 @@
 
 namespace App\Controllers;
 
-class Helper
+class HelperController
 {
   /**
    * Garantiza que la sesión esté disponible y que el usuario tenga permiso para ver una sección.
@@ -198,5 +198,14 @@ class Helper
       http_response_code(500);
       echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     }
+  }
+
+  function getCurrentUser()
+  {
+    session_start();
+    if (empty($_SESSION['usuario']))
+      return null;
+
+    return $_SESSION['usuario'];
   }
 }

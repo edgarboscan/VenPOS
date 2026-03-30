@@ -4,6 +4,14 @@
  * Los métodos son estáticos y pueden usarse sin instanciar la clase.
  */
 class Utils {
+  static paginacion = [];
+  static general = [];
+  static seguridad = [];
+  static monitoreo = [];
+  static notificaciones = [];
+  static api = [];
+  static backup = [];
+
   /**
    * Evita que una función se ejecute demasiado seguido.
    * Ejecuta `fn` sólo cuando han pasado `wait` milisegundos desde la última llamada.
@@ -409,9 +417,7 @@ class Utils {
     Swal.fire({
       title: "<strong>" + title + "</strong>",
       html:
-        '<h1 class="text-gradient"><strong>¡UPS..!</strong></h1><p class="mt-3">' +
-        mensaje +
-        "</p>",
+        '<h1 class="text-gradient"></h1><p class="mt-3">' + mensaje + "</p>",
       allowOutsideClick: false,
       backdrop: "rgba(61, 63, 66, 0.73)",
       showClass: {
@@ -433,38 +439,52 @@ class Utils {
   }
 
   /**
-   * Obtiene todas las configuraciones de la API y las transforma en un arreglo usable.
+   * Muestra un modal de confirmación usando SweetAlert2 con estilo predefinido.
    *
-   * @param {string} [BASE_URL] - URL base donde está el backend (por defecto ".." ).
-   * @returns {Promise<Array>} Arreglo de configuraciones desnormalizadas.
+   * @param {string} title - Título del modal.
+   * @param {string} mensaje - Mensaje a mostrar en el cuerpo.
+   * @return {Promise<boolean>} Promesa que se resuelve con true si el usuario confirma, o false si cancela.
+   * Nota: Este método muestra un modal con opciones de confirmación y cancelación. El resultado se obtiene a través de la promesa que devuelve SweetAlert2.
+   * Ejemplo de uso:
+   * Utils.showSwallConfirm("¿Eliminar producto?", "¿Estás seguro de que deseas eliminar este producto?").then((confirmed) => {
+   *   if (confirmed) {
+   *     // El usuario confirmó la acción
+   *   }
+   * });
    */
-  static async getAllConfig(BASE_URL) {
-    try {
-      var resp = await fetch(
-        (BASE_URL || "..") + "/backend/public/index.php/api/getConfig",
-      );
-      var items = await resp.json();
-      var configuracion = [];
-      items.configuracion_sistema.forEach((it) => {
-        const grupo = JSON.parse(it.configuracion_completa).grupos;
-        // const info = grupo.api.info;
-        const info = Object.values(grupo)[0].info;
-        // info.configuracion = grupo.api.configuraciones;
-        info.configuracion = Object.values(grupo)[0].configuraciones;
-
-        configuracion.push(info);
-      });
-
-      return configuracion;
-    } catch (error) {
-      this.showSwalSB(
-        "error",
-        "Error de configuración",
-        "No se pudo cargar la configuración.",
-        2000,
-      );
-      return null;
-    }
+  static showSwallConfirm(
+    title,
+    mensaje,
+    confirmText = "Sí, eliminar",
+    cancelText = "Cancelar",
+  ) {
+    Swal.fire({
+      title: "<strong>" + title + "</strong>",
+      html:
+        '<h1 class="text-gradient"></h1><p class="mt-3">' + mensaje + "</p>",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: confirmText,
+      cancelButtonText: cancelText,
+      allowOutsideClick: false,
+      backdrop: "rgba(61, 63, 66, 0.73)",
+      showClass: {
+        popup: `
+      animate__animated
+      animate__fadeInUp
+      animate__faster
+    `,
+      },
+      hideClass: {
+        popup: `
+      animate__animated
+      animate__fadeOutDown
+      animate__faster
+    `,
+      },
+      icon: "question",
+    });
   }
 
   /**
@@ -477,7 +497,7 @@ class Utils {
   static async getConfig(BASE_URL, grupo) {
     try {
       var resp = await fetch(
-        (BASE_URL || "..") + "/backend/public/index.php/api/getConfig",
+        BASE_URL + "/backend/public/index.php/api/getConfig",
       );
       var items = await resp.json();
       var resp = [];
@@ -542,5 +562,228 @@ class Utils {
   static capitalizeFirstLetter(string) {
     if (!string) return string; // Handle empty or null strings
     return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
+  static async sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  static async getAll_Config(BASE_URL) {
+    const categorias = [
+      "paginacion",
+      "general",
+      "seguridad",
+      "notificaciones",
+      "api",
+      "backup",
+      "monitoreo",
+    ];
+
+    const promises = categorias.map(async (cat) => {
+      let conf = await Utils.getConfig(BASE_URL, cat);
+      if (conf) {
+        conf.forEach((element) => {
+          var json = {
+            nombre: element.clave,
+            valor: element.valor,
+            tipo: element.tipo,
+          };
+          switch (cat) {
+            case "paginacion":
+              this.paginacion.push(json);
+              break;
+            case "general":
+              this.general.push(json);
+              break;
+            case "seguridad":
+              this.seguridad.push(json);
+              break;
+            case "notificaciones":
+              this.notificaciones.push(json);
+              break;
+            case "api":
+              this.api.push(json);
+              break;
+            case "backup":
+              this.backup.push(json);
+              break;
+            case "monitoreo":
+              this.monitoreo.push(json);
+              break;
+          }
+        });
+      }
+    });
+
+    await Promise.all(promises);
+  }
+
+  /**
+   * Genera el listado de busqueda
+   * @param {*} inputId
+   * @param {*} hiddenName
+   * @param {*} listId
+   * @param {*} searchUrl
+   * @param {*} labelFn
+   * @returns
+   */
+  static async attachAutocomplete(
+    inputId,
+    hiddenName,
+    listId,
+    searchUrl,
+    labelFn,
+  ) {
+    // prefer element inside Swal popup if present
+    let input = null;
+    let list = null;
+    try {
+      if (window.Swal && Swal.getPopup) {
+        const p = Swal.getPopup();
+        if (p) {
+          input = p.querySelector(`#${inputId}`) || null;
+          list = p.querySelector(`#${listId}`) || null;
+        }
+      }
+    } catch (e) {}
+    if (!input) input = document.getElementById(inputId);
+    if (!list) list = document.getElementById(listId);
+    if (!input || !list) return;
+    if (input.dataset.multiAttached) return;
+    input.dataset.multiAttached = "1";
+
+    const form = input.closest("form");
+    let hidden = null;
+    try {
+      if (form) {
+        hidden =
+          form.elements[hiddenName] ||
+          form.querySelector(`[name="${hiddenName}"]`);
+      }
+    } catch (e) {
+      hidden = null;
+    }
+    if (!hidden) hidden = document.querySelector(`input[name="${hiddenName}"]`);
+
+    let selected = [];
+
+    function updateHidden() {
+      if (!hidden) return;
+      hidden.value = "";
+      input.value = "";
+      const id = selected.map((s) => s.id);
+      const name = selected.map((s) => s.label);
+      hidden.value = id.length ? id : "";
+      input.value = name.length ? name : "";
+      selected = [];
+    }
+
+    // initialize from hidden value if present
+    try {
+      if (hidden && hidden.value) {
+        const v = hidden.value.trim();
+        if (v.startsWith("[")) {
+          const parsed = JSON.parse(v);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((p) =>
+              selected.push({ id: null, label: String(p) }),
+            );
+          }
+        } else if (v.includes("\n") || v.includes(",")) {
+          const parts = v
+            .split(/[,\r\n]+/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+          parts.forEach((p) => selected.push({ id: null, label: p }));
+        } else if (v) {
+          selected.push({ id: null, label: v });
+        }
+        updateHidden();
+      }
+    } catch (e) {}
+
+    const doSearch = Utils.debounce(async (q) => {
+      if (!q || q.length < 2) {
+        list.innerHTML = "";
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams();
+        params.set("pagina", 1);
+        params.set("por_pagina", parseInt(Utils.paginacion?.por_pagina) || 10);
+        params.set("q", q);
+        params.set("activo", "1");
+
+        const resp = await fetch(searchUrl + "?" + params.toString(), {
+          cache: "no-store",
+        });
+        const j = await resp.json();
+
+        // normalize response into an array of items
+        let listado = [];
+        if (Array.isArray(j.data)) {
+          listado = JSON.parse(j.data[0]["result"]).data;
+        } else if (j && Array.isArray(j.data)) {
+          listado = j.data;
+        } else if (j) {
+          // take first array value found
+          for (const v of Object.values(j)) {
+            if (Array.isArray(v)) {
+              listado = v;
+              break;
+            }
+          }
+        }
+
+        list.innerHTML = "";
+        list.style.display = listado.length ? "block" : "none";
+        listado.forEach((itt) => {
+          const div = document.createElement("div");
+          div.className = "list-group-item list-group-item-action";
+          div.style.cursor = "pointer";
+
+          const label =
+            labelFn ?
+              labelFn(itt)
+            : itt.nombre || itt.nombre_completo || itt.id;
+          div.textContent = label;
+
+          div.addEventListener("click", () => {
+            if (!selected.some((s) => s.label === label)) {
+              selected.push({ id: itt.id || null, label });
+              updateHidden();
+              list.style.display = "none";
+            }
+            list.innerHTML = "";
+            input.focus();
+          });
+
+          list.appendChild(div);
+        });
+      } catch (err) {
+        console.error("multi-autocomplete error", err);
+      }
+      x1;
+    }, 200);
+
+    input.addEventListener("input", (e) => {
+      doSearch(e.target.value.trim());
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const v = input.value.trim();
+        if (v) {
+          if (!selected.some((s) => s.label === v)) {
+            selected.push({ id: null, label: v });
+            renderTags();
+            updateHidden();
+          }
+          list.innerHTML = "";
+        }
+      }
+    });
   }
 }

@@ -1,14 +1,36 @@
 <?php
-session_start();
+$base = __DIR__ . '/..';
+require './src/utils/auth.php';
+require './src/utils/curl.php';
 
 
+$currentPage = $_SERVER['PHP_SELF'] ?? basename(__FILE__);
 // Si ya está logueado, redirigir al dashboard
-if (isset($_SESSION['user_id'])) {
-    header('Location: index.php');
-    exit;
-}
 
 
+// if (ini_get("session.use_cookies")) {
+//     $params = session_get_cookie_params();
+//     setcookie(
+//         session_name(),
+//         '',
+//         time() - 42000,
+//         $params["path"],
+//         $params["domain"],
+//         $params["secure"],
+//         $params["httponly"]
+//     );
+// }
+
+// Destruir toda la sesión actual
+// session_unset();     // Libera todas las variables de sesión
+// session_destroy();   // Destruye la sesión (elimina el archivo de sesión)
+
+// Opcional: regenerar el ID de sesión para mayor seguridad
+// if(session_status() !== PHP_SESSION_ACTIVE) {
+//     session_start();
+// }
+
+// session_regenerate_id(true);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -28,6 +50,23 @@ if (isset($_SESSION['user_id'])) {
     <link rel="stylesheet" href="./node_modules/animate.css/animate.css" />
     <link rel="stylesheet" href="./node_modules/sweetalert2/dist/sweetalert2.css" media="print"
         onload="this.media='all'">
+    <link rel="apple-touch-icon" sizes="57x57" href="./src/assets/img/icons/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="./src/assets/img/icons/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="./src/assets/img/icons/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="./src/assets/img/icons/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="./src/assets/img/icons/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="./src/assets/img/icons/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="./src/assets/img/icons/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="./src/assets/img/icons/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./src/assets/img/icons/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="./src/assets/img/icons/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="./src/assets/img/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="./src/assets/img/icons/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./src/assets/img/icons/favicon-16x16.png">
+    <link rel="manifest" href="./src/assets/img/icons/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="./src/assets/img/icons/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
 </head>
 
 <body>
@@ -35,13 +74,9 @@ if (isset($_SESSION['user_id'])) {
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <div class="hospital-logo">
-                    <span class="material-symbols-outlined" style="font-size: 64px;">
-                        point_of_sale
-                    </span>
+                <div>
+                    <img src="./src/assets/img/logos/logo.png" class="img-fluid" alt="VenPos" width="150" height="150" />
                 </div>
-                <h1>VenPOS</h1>
-                <p>Point of Sale ONLINE</p>
             </div>
             <div class="login-body">
                 <form id="loginForm" method="POST" novalidate>

@@ -2,7 +2,7 @@
 // Rutas del API (delegar a controladores)
 // Acepta URIs que contengan '/api/login' para ser tolerante a prefijos de proyecto
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-// CSRF token endpoint (GET)
+/* CSRF token endpoint (GET)  - devuelve un token asociado a la sesión actual para proteger contra CSRF en clientes SPA o similares */
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/csrf-token') !== false) {
   // provide a token associated to the session
   $maybe = __DIR__ . '/../src/helpers/csrf.php';
@@ -15,6 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/csrf-token') !== 
     exit;
   }
 }
+
+/* Rutas para login (POST) y logout (POST o GET)
+   Aceptamos POST para login/logout por seguridad, pero también GET para logout por conveniencia en algunos clientes (aunque no es lo ideal)
+*/
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && strpos($uri, '/api/login/change-password') !== false) {
   if (!class_exists('\App\\Controllers\\LoginController')) {
     $maybe = __DIR__ . '/../src/controllers/LoginController.php';
@@ -45,7 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && strpos($uri, '/api/login/change-pas
   exit;
 }
 
-// Ruta de logout por API (destruye la sesión)
+/* Ruta de logout por API (destruye la sesión)
+    Acepta tanto POST como GET para ser flexible con diferentes clientes (aunque POST es más recomendado)
+*/
 if (
   (
     $_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET'
@@ -78,6 +84,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && strpos($uri, '/api/login/debug') !=
   exit;
 }
 
+/*
+  Rutas para verificar sesión (GET)
+*/
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/login/verificaSession') !== false) {
   \App\Controllers\LoginController::verificaSession();
   exit;
@@ -85,7 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/login/verificaSes
 
 // Puedes añadir aquí otras rutas si lo deseas
 
-
+/*
+  Ruta para obtener configuración del sistema (GET)
+*/
 if (strpos($uri, '/api/getConfig') !== false) {
   if (session_status() === PHP_SESSION_NONE) {
     @session_start();
@@ -102,7 +113,9 @@ if (strpos($uri, '/api/getConfig') !== false) {
   exit;
 }
 
-
+/*
+  Rutas para usuarios
+*/
 if (strpos($uri, '/api/usuarios') !== false) {
 
 
@@ -138,6 +151,46 @@ if (strpos($uri, '/api/usuarios') !== false) {
 
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     \App\Controllers\UsuariosController::guardar();
+    exit;
+  }
+}
+
+/*
+  Rutas para inventario
+*/
+if (strpos($uri, '/api/inventario') !== false) {
+  if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    \App\Controllers\InventarioController::get_listado();
+    exit;
+  }
+}
+
+/*
+  Rutas para categorías
+*/
+if (strpos($uri, '/api/categorias') !== false) {
+  if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/categorias/search') !== false) {
+    \App\Controllers\CategoriaController::search();
+    exit;
+  }
+}
+
+/*
+  Rutas para unidades de medida
+*/
+if (strpos($uri, '/api/unidad-medida') !== false) {
+  if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/unidad-medida/search') !== false) {
+    \App\Controllers\UnidadMedidaController::search();
+    exit;
+  }
+}
+
+/*
+  Rutas para marcas
+*/
+if (strpos($uri, '/api/marcas') !== false) {
+  if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/marcas/search') !== false) {
+    \App\Controllers\MarcaController::search();
     exit;
   }
 }

@@ -24,6 +24,31 @@ USE `ven_pos`;
 --
 -- Dumping routines for database 'ven_pos'
 --
+/*!50003 DROP FUNCTION IF EXISTS `fn_deuda_proveedor` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` FUNCTION `fn_deuda_proveedor`(p_proveedor_id INT) RETURNS decimal(12,2)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+    DECLARE v_deuda DECIMAL(12,2);
+    SELECT IFNULL(SUM(saldo_pendiente), 0) INTO v_deuda
+    FROM compras
+    WHERE proveedor_id = p_proveedor_id AND estado IN ('PENDIENTE');
+    RETURN v_deuda;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP FUNCTION IF EXISTS `fn_get_menus_con_permisos` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -55,6 +80,7 @@ BEGIN
                     'nombre', m.nombre,
                     'url', m.url,
                     'icono', m.icono,
+                    'tipo_icono', m.tipo_icono,
                     'padre_id', m.padre_id,
                     'orden', m.orden,
                     'nivel', m.nivel,
@@ -136,6 +162,386 @@ BEGIN
     END IF;
     
     RETURN v_result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP FUNCTION IF EXISTS `fn_saldo_cliente` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` FUNCTION `fn_saldo_cliente`(p_cliente_id INT) RETURNS decimal(12,2)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+    DECLARE v_saldo DECIMAL(12,2);
+    SELECT IFNULL(SUM(saldo_pendiente), 0) INTO v_saldo
+    FROM ventas
+    WHERE cliente_id = p_cliente_id AND tipo_venta = 'CREDITO' AND estado = 'COMPLETADA';
+    RETURN v_saldo;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP FUNCTION IF EXISTS `fn_stock_producto_compuesto` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` FUNCTION `fn_stock_producto_compuesto`(p_producto_id INT, p_empresa_id INT) RETURNS decimal(12,2)
+    READS SQL DATA
+    DETERMINISTIC
+BEGIN
+    DECLARE v_stock_min DECIMAL(12,2) DEFAULT 99999999;
+    DECLARE v_componente_id INT;
+    DECLARE v_cantidad_componente DECIMAL(12,4);
+    DECLARE v_stock_componente DECIMAL(12,2);
+    DECLARE v_done INT DEFAULT 0;
+    DECLARE cur CURSOR FOR
+        SELECT producto_componente_id, cantidad
+        FROM productos_componentes
+        WHERE producto_compuesto_id = p_producto_id;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done = 1;
+    
+    OPEN cur;
+    read_loop: LOOP
+        FETCH cur INTO v_componente_id, v_cantidad_componente;
+        IF v_done THEN
+            LEAVE read_loop;
+        END IF;
+        SELECT stock_actual INTO v_stock_componente
+        FROM inventario
+        WHERE empresa_id = p_empresa_id AND producto_id = v_componente_id;
+        IF v_stock_componente IS NULL THEN
+            SET v_stock_min = 0;
+            LEAVE read_loop;
+        END IF;
+        SET v_stock_min = LEAST(v_stock_min, FLOOR(v_stock_componente / v_cantidad_componente));
+    END LOOP;
+    CLOSE cur;
+    
+    IF v_stock_min = 99999999 THEN
+        SET v_stock_min = 0;
+    END IF;
+    
+    RETURN v_stock_min;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_auditoria_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_auditoria_json`(
+    IN p_tabla VARCHAR(50),
+    IN p_desde DATE,
+    IN p_hasta DATE,
+    IN p_search VARCHAR(100),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT;
+    DECLARE v_total INT;
+    DECLARE v_result JSON;
+    
+    IF p_page IS NULL OR p_page < 1 THEN SET p_page = 1; END IF;
+    IF p_limit IS NULL OR p_limit < 1 THEN SET p_limit = 10; END IF;
+    IF p_limit > 100 THEN SET p_limit = 100; END IF;
+    SET v_offset = (p_page - 1) * p_limit;
+    
+    SET @search_cond = IF(p_search IS NOT NULL AND p_search != '',
+        CONCAT(' AND (a.descripcion LIKE "%', p_search, '%" OR a.usuario LIKE "%', p_search, '%")'),
+        '');
+    SET @tabla_cond = IF(p_tabla IS NOT NULL AND p_tabla != '', CONCAT(' AND a.tabla_origen = "', p_tabla, '"'), '');
+    SET @fecha_cond = CONCAT(' AND (', IF(p_desde IS NOT NULL, CONCAT('DATE(a.fecha_auditoria) >= "', p_desde, '"'), '1=1'), ' AND ', IF(p_hasta IS NOT NULL, CONCAT('DATE(a.fecha_auditoria) <= "', p_hasta, '"'), '1=1'), ')');
+    
+    -- Total
+    SET @sql_count = CONCAT('
+        SELECT COUNT(*) INTO @v_total
+        FROM auditoria_integridad a
+        WHERE 1=1
+        ', @tabla_cond, @fecha_cond, @search_cond);
+    PREPARE stmt_count FROM @sql_count;
+    EXECUTE stmt_count;
+    DEALLOCATE PREPARE stmt_count;
+    SET v_total = @v_total;
+    
+    -- Datos
+    SET @sql_data = CONCAT('
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                "id", a.id_auditoria,
+                "tabla", a.tabla_origen,
+                "id_registro", a.id_registro,
+                "evento", a.tipo_evento,
+                "descripcion", a.descripcion,
+                "fecha", a.fecha_auditoria,
+                "usuario", a.usuario
+            )
+        ), JSON_ARRAY()) INTO @v_result
+        FROM auditoria_integridad a
+        WHERE 1=1
+        ', @tabla_cond, @fecha_cond, @search_cond, '
+        ORDER BY a.fecha_auditoria DESC
+        LIMIT ', v_offset, ', ', p_limit);
+    PREPARE stmt_data FROM @sql_data;
+    EXECUTE stmt_data;
+    DEALLOCATE PREPARE stmt_data;
+    SET v_result = @v_result;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'data', v_result,
+        'pagination', JSON_OBJECT(
+            'current_page', p_page,
+            'per_page', p_limit,
+            'total', v_total,
+            'last_page', CEIL(v_total / p_limit),
+            'from', IF(v_total = 0, 0, v_offset + 1),
+            'to', LEAST(v_offset + p_limit, v_total)
+        )
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_cambiar_empresa_contexto` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_cambiar_empresa_contexto`(
+    IN p_usuario_id INT,
+    IN p_empresa_id INT
+)
+BEGIN
+    DECLARE v_tiene_acceso INT;
+    
+    SELECT COUNT(*) INTO v_tiene_acceso
+    FROM usuario_empresas
+    WHERE usuario_id = p_usuario_id AND empresa_id = p_empresa_id;
+    
+    IF v_tiene_acceso = 0 THEN
+        SELECT JSON_OBJECT(
+            'status', 'error',
+            'message', 'El usuario no tiene acceso a esta empresa'
+        ) AS result;
+    ELSE
+        -- Establecer variable de sesión para el contexto actual
+        SET @app_empresa_id = p_empresa_id;
+        SET @app_usuario_id = p_usuario_id;
+        
+        SELECT JSON_OBJECT(
+            'status', 'success',
+            'message', 'Contexto cambiado',
+            'empresa_id', p_empresa_id
+        ) AS result;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_clientes_credito_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_clientes_credito_json`(
+    IN p_empresa_id INT,
+    IN p_search VARCHAR(100),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT;
+    DECLARE v_total INT;
+    DECLARE v_result JSON;
+    
+    IF p_page IS NULL OR p_page < 1 THEN SET p_page = 1; END IF;
+    IF p_limit IS NULL OR p_limit < 1 THEN SET p_limit = 10; END IF;
+    IF p_limit > 100 THEN SET p_limit = 100; END IF;
+    SET v_offset = (p_page - 1) * p_limit;
+    
+    SET @search_cond = IF(p_search IS NOT NULL AND p_search != '',
+        CONCAT(' AND (c.nombre LIKE "%', p_search, '%" OR c.numero_documento LIKE "%', p_search, '%" OR c.telefono LIKE "%', p_search, '%")'),
+        '');
+    SET @empresa_cond = IF(p_empresa_id IS NOT NULL, CONCAT(' AND c.empresa_id = ', p_empresa_id), '');
+    
+    -- Total
+    SET @sql_count = CONCAT('
+        SELECT COUNT(*) INTO @v_total
+        FROM clientes c
+        WHERE c.saldo_credito > 0
+        ', @empresa_cond, @search_cond);
+    PREPARE stmt_count FROM @sql_count;
+    EXECUTE stmt_count;
+    DEALLOCATE PREPARE stmt_count;
+    SET v_total = @v_total;
+    
+    -- Datos
+    SET @sql_data = CONCAT('
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                "id", c.id,
+                "documento", c.numero_documento,
+                "nombre", CONCAT(c.nombre, " ", IFNULL(c.apellido, "")),
+                "telefono", c.telefono,
+                "email", c.email,
+                "limite_credito", c.limite_credito,
+                "saldo_credito", c.saldo_credito
+            )
+        ), JSON_ARRAY()) INTO @v_result
+        FROM clientes c
+        WHERE c.saldo_credito > 0
+        ', @empresa_cond, @search_cond, '
+        ORDER BY c.saldo_credito DESC
+        LIMIT ', v_offset, ', ', p_limit);
+    PREPARE stmt_data FROM @sql_data;
+    EXECUTE stmt_data;
+    DEALLOCATE PREPARE stmt_data;
+    SET v_result = @v_result;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'data', v_result,
+        'pagination', JSON_OBJECT(
+            'current_page', p_page,
+            'per_page', p_limit,
+            'total', v_total,
+            'last_page', CEIL(v_total / p_limit),
+            'from', IF(v_total = 0, 0, v_offset + 1),
+            'to', LEAST(v_offset + p_limit, v_total)
+        )
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_compras_por_periodo_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_compras_por_periodo_json`(
+    IN p_desde DATE,
+    IN p_hasta DATE,
+    IN p_empresa_id INT,
+    IN p_search VARCHAR(100),
+    IN p_estado VARCHAR(20),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT;
+    DECLARE v_total INT;
+    DECLARE v_result JSON;
+    
+    IF p_page IS NULL OR p_page < 1 THEN SET p_page = 1; END IF;
+    IF p_limit IS NULL OR p_limit < 1 THEN SET p_limit = 10; END IF;
+    IF p_limit > 100 THEN SET p_limit = 100; END IF;
+    SET v_offset = (p_page - 1) * p_limit;
+    
+    SET @search_cond = IF(p_search IS NOT NULL AND p_search != '',
+        CONCAT(' AND (pr.nombre LIKE "%', p_search, '%" OR c.numero_factura LIKE "%', p_search, '%")'),
+        '');
+    SET @estado_cond = IF(p_estado IS NOT NULL AND p_estado != '', CONCAT(' AND c.estado = "', p_estado, '"'), '');
+    SET @empresa_cond = IF(p_empresa_id IS NOT NULL, CONCAT(' AND c.empresa_id = ', p_empresa_id), '');
+    SET @fecha_cond = CONCAT(' AND (', IF(p_desde IS NOT NULL, CONCAT('c.fecha_compra >= "', p_desde, '"'), '1=1'), ' AND ', IF(p_hasta IS NOT NULL, CONCAT('c.fecha_compra <= "', p_hasta, '"'), '1=1'), ')');
+    
+    -- Total
+    SET @sql_count = CONCAT('
+        SELECT COUNT(*) INTO @v_total
+        FROM compras c
+        INNER JOIN proveedores pr ON c.proveedor_id = pr.id
+        WHERE 1=1
+        ', @empresa_cond, @fecha_cond, @search_cond, @estado_cond);
+    PREPARE stmt_count FROM @sql_count;
+    EXECUTE stmt_count;
+    DEALLOCATE PREPARE stmt_count;
+    SET v_total = @v_total;
+    
+    -- Datos
+    SET @sql_data = CONCAT('
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                "id", c.id,
+                "fecha_compra", c.fecha_compra,
+                "proveedor", pr.nombre,
+                "numero_factura", c.numero_factura,
+                "total", c.total,
+                "saldo_pendiente", c.saldo_pendiente,
+                "estado", c.estado
+            )
+        ), JSON_ARRAY()) INTO @v_result
+        FROM compras c
+        INNER JOIN proveedores pr ON c.proveedor_id = pr.id
+        WHERE 1=1
+        ', @empresa_cond, @fecha_cond, @search_cond, @estado_cond, '
+        ORDER BY c.fecha_compra DESC
+        LIMIT ', v_offset, ', ', p_limit);
+    PREPARE stmt_data FROM @sql_data;
+    EXECUTE stmt_data;
+    DEALLOCATE PREPARE stmt_data;
+    SET v_result = @v_result;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'data', v_result,
+        'pagination', JSON_OBJECT(
+            'current_page', p_page,
+            'per_page', p_limit,
+            'total', v_total,
+            'last_page', CEIL(v_total / p_limit),
+            'from', IF(v_total = 0, 0, v_offset + 1),
+            'to', LEAST(v_offset + p_limit, v_total)
+        )
+    ) AS result;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -247,6 +653,174 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_listar_empresas_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_listar_empresas_json`(
+    IN p_activo TINYINT(1),
+    IN p_search VARCHAR(100),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT;
+    DECLARE v_total INT;
+    DECLARE v_result JSON;
+    
+    -- Valores por defecto
+    IF p_page IS NULL OR p_page < 1 THEN SET p_page = 1; END IF;
+    IF p_limit IS NULL OR p_limit < 1 THEN SET p_limit = 10; END IF;
+    IF p_limit > 100 THEN SET p_limit = 100; END IF;
+    SET v_offset = (p_page - 1) * p_limit;
+    
+    -- Construir condición de búsqueda
+    SET @search_cond = IF(p_search IS NOT NULL AND p_search != '',
+        CONCAT(' AND (e.nombre LIKE "%', p_search, '%" OR e.ruc LIKE "%', p_search, '%" OR e.email LIKE "%', p_search, '%")'),
+        '');
+    
+    -- Total de registros con filtros
+    SET @sql_count = CONCAT('
+        SELECT COUNT(*) INTO @v_total
+        FROM empresas e
+        WHERE 1=1
+        ', IF(p_activo IS NOT NULL, ' AND e.activo = ', p_activo), '
+        ', @search_cond);
+    PREPARE stmt_count FROM @sql_count;
+    EXECUTE stmt_count;
+    DEALLOCATE PREPARE stmt_count;
+    SET v_total = @v_total;
+    
+    -- Datos paginados con filtros
+    SET @sql_data = CONCAT('
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                "id", e.id,
+                "nombre", e.nombre,
+                "ruc", e.ruc,
+                "direccion", e.direccion,
+                "telefono", e.telefono,
+                "email", e.email,
+                "activo", e.activo
+            )
+        ), JSON_ARRAY()) INTO @v_result
+        FROM empresas e
+        WHERE 1=1
+        ', IF(p_activo IS NOT NULL, ' AND e.activo = ', p_activo), '
+        ', @search_cond, '
+        ORDER BY e.id
+        LIMIT ', v_offset, ', ', p_limit);
+    PREPARE stmt_data FROM @sql_data;
+    EXECUTE stmt_data;
+    DEALLOCATE PREPARE stmt_data;
+    SET v_result = @v_result;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'data', v_result,
+        'pagination', JSON_OBJECT(
+            'current_page', p_page,
+            'per_page', p_limit,
+            'total', v_total,
+            'last_page', CEIL(v_total / p_limit),
+            'from', IF(v_total = 0, 0, v_offset + 1),
+            'to', LEAST(v_offset + p_limit, v_total)
+        )
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_listar_empresas_usuario` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_listar_empresas_usuario`(
+    IN p_usuario_id INT,
+    IN p_search VARCHAR(100),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT;
+    DECLARE v_total INT;
+    DECLARE v_result JSON;
+    
+    IF p_page IS NULL OR p_page < 1 THEN SET p_page = 1; END IF;
+    IF p_limit IS NULL OR p_limit < 1 THEN SET p_limit = 10; END IF;
+    IF p_limit > 100 THEN SET p_limit = 100; END IF;
+    SET v_offset = (p_page - 1) * p_limit;
+    
+    SET @search_cond = IF(p_search IS NOT NULL AND p_search != '',
+        CONCAT(' AND (e.nombre LIKE "%', p_search, '%" OR e.ruc LIKE "%', p_search, '%")'),
+        '');
+    SET @usuario_cond = IF(p_usuario_id IS NOT NULL, CONCAT(' AND ue.usuario_id = ', p_usuario_id), '');
+    
+    -- Total
+    SET @sql_count = CONCAT('
+        SELECT COUNT(*) INTO @v_total
+        FROM usuario_empresas ue
+        INNER JOIN empresas e ON ue.empresa_id = e.id
+        WHERE 1=1
+        ', @usuario_cond, @search_cond, ' AND e.activo = 1');
+    PREPARE stmt_count FROM @sql_count;
+    EXECUTE stmt_count;
+    DEALLOCATE PREPARE stmt_count;
+    SET v_total = @v_total;
+    
+    -- Datos
+    SET @sql_data = CONCAT('
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                "id", e.id,
+                "nombre", e.nombre,
+                "ruc", e.ruc,
+                "predeterminada", ue.es_predeterminada
+            )
+        ), JSON_ARRAY()) INTO @v_result
+        FROM usuario_empresas ue
+        INNER JOIN empresas e ON ue.empresa_id = e.id
+        WHERE 1=1
+        ', @usuario_cond, @search_cond, ' AND e.activo = 1
+        ORDER BY ue.es_predeterminada DESC, e.nombre
+        LIMIT ', v_offset, ', ', p_limit);
+    PREPARE stmt_data FROM @sql_data;
+    EXECUTE stmt_data;
+    DEALLOCATE PREPARE stmt_data;
+    SET v_result = @v_result;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'data', v_result,
+        'pagination', JSON_OBJECT(
+            'current_page', p_page,
+            'per_page', p_limit,
+            'total', v_total,
+            'last_page', CEIL(v_total / p_limit),
+            'from', IF(v_total = 0, 0, v_offset + 1),
+            'to', LEAST(v_offset + p_limit, v_total)
+        )
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `sp_login` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -267,13 +841,12 @@ BEGIN
     DECLARE v_is_super TINYINT(1);
     DECLARE v_menus_json JSON;
     DECLARE v_roles_json JSON;
+    DECLARE v_empresas_json JSON;
     DECLARE v_count INT;
 
-    -- Verificar si el email existe
     SELECT COUNT(*) INTO v_count FROM usuarios WHERE email = p_email;
     
     IF v_count = 0 THEN
-        -- CASO 1: Email no existe
         DO SLEEP(1.5);
         SELECT JSON_OBJECT(
             'estado', 'error',
@@ -281,29 +854,24 @@ BEGIN
             'mensaje', 'Email o contraseña incorrectos',
             'metadata', JSON_OBJECT('timestamp', NOW())
         ) AS resultado;
-        
     ELSE
-        -- El email existe, obtenemos datos
         SELECT u.id, u.password, u.activo, (
-			select count(*)  
-				from roles r INNER JOIN 
-					usuario_roles ur ON r.id = ur.rol_id AND r.nombre = 'Super Administrador'
-				where ur.usuario_id = u.id)
-        INTO v_usuario_id, v_password_hash,  v_activo, v_is_super
+            SELECT COUNT(*)  
+            FROM roles r 
+            INNER JOIN usuario_roles ur ON r.id = ur.rol_id 
+            WHERE r.nombre = 'Super Administrador' AND ur.usuario_id = u.id
+        ) INTO v_usuario_id, v_password_hash, v_activo, v_is_super
         FROM usuarios u
         WHERE email = p_email;
         
         IF v_activo = 0 THEN
-            -- CASO 2: Usuario inactivo
             SELECT JSON_OBJECT(
                 'estado', 'error',
                 'codigo', 'CUENTA_INACTIVA',
                 'mensaje', 'Usuario desactivado',
                 'metadata', JSON_OBJECT('timestamp', NOW())
             ) AS resultado;
-            
         ELSE
-            -- CASO 3: Usuario activo
             -- Obtener menús
             SET v_menus_json = fn_get_menus_con_permisos(v_usuario_id, v_is_super);
             
@@ -321,41 +889,1495 @@ BEGIN
             ) INTO v_roles_json
             FROM roles r
             INNER JOIN usuario_roles ur ON r.id = ur.rol_id
-            WHERE ur.usuario_id = v_usuario_id
-            AND r.activo = 1;
+            WHERE ur.usuario_id = v_usuario_id AND r.activo = 1;
             
-            -- Respuesta final
-            SELECT 
-                JSON_OBJECT(
-                    'estado', 'exito',
-                    'requiere_verificacion', TRUE,
-                    'usuario', (
-                        SELECT JSON_OBJECT(
-                            'id', u.id,
-                            'cedula', u.cedula,
-                            'nombre', u.nombre,
-                            'apellido', u.apellido,
-                            'nombre_completo', CONCAT(u.nombre, ' ', u.apellido),
-                            'email', u.email,
-                            'telefono', u.telefono,
-                            'img_url', u.img_url,
-                            'activo', u.activo
-                        )
-                        FROM usuarios u
-                        WHERE u.id = v_usuario_id
-                    ),
-                    'seguridad', JSON_OBJECT('password_hash', v_password_hash),
-                    'acceso', JSON_OBJECT(
-                        'menus', v_menus_json,
-                        'roles', v_roles_json
-                    ),
-                    'metadata', JSON_OBJECT(
-                        'timestamp', NOW(),
-                        'version', '1.0.0'
+            -- Obtener empresas asignadas al usuario
+            SELECT IFNULL(
+                JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                        'id', e.id,
+                        'nombre', e.nombre,
+                        'ruc', e.ruc,
+                        'predeterminada', IFNULL(ue.es_predeterminada, 0)
                     )
-                ) AS resultado;
+                ),
+                JSON_ARRAY()
+            ) INTO v_empresas_json
+            FROM empresas e
+            INNER JOIN usuario_empresas ue ON e.id = ue.empresa_id
+            WHERE ue.usuario_id = v_usuario_id AND e.activo = 1;
+            
+            SELECT JSON_OBJECT(
+                'estado', 'exito',
+                'requiere_verificacion', TRUE,
+                'usuario', (
+                    SELECT JSON_OBJECT(
+                        'id', u.id,
+                        'cedula', u.cedula,
+                        'nombre', u.nombre,
+                        'apellido', u.apellido,
+                        'nombre_completo', CONCAT(u.nombre, ' ', u.apellido),
+                        'email', u.email,
+                        'telefono', u.telefono,
+                        'img_url', u.img_url,
+                        'activo', u.activo
+                    )
+                    FROM usuarios u
+                    WHERE u.id = v_usuario_id
+                ),
+                'seguridad', JSON_OBJECT('password_hash', v_password_hash),
+                'acceso', JSON_OBJECT(
+                    'menus', v_menus_json,
+                    'roles', v_roles_json,
+                    'empresas', v_empresas_json
+                ),
+                'metadata', JSON_OBJECT(
+                    'timestamp', NOW(),
+                    'version', '1.0.0'
+                )
+            ) AS resultado;
         END IF;
     END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_pagar_credito_cliente` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_pagar_credito_cliente`(
+    IN p_empresa_id INT,
+    IN p_cliente_id INT,
+    IN p_venta_id INT,
+    IN p_monto DECIMAL(12,2),
+    IN p_fecha_pago DATE,
+    IN p_forma_pago VARCHAR(50)
+)
+BEGIN
+    DECLARE v_saldo_venta DECIMAL(12,2);
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Error al registrar pago de cliente') AS result;
+    END;
+    
+    START TRANSACTION;
+    
+    IF p_venta_id IS NOT NULL THEN
+        SELECT saldo_pendiente INTO v_saldo_venta FROM ventas WHERE id = p_venta_id FOR UPDATE;
+        IF p_monto > v_saldo_venta THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El monto supera el saldo pendiente de la venta';
+        END IF;
+    END IF;
+    
+    INSERT INTO pagos_clientes (empresa_id, cliente_id, venta_id, monto, fecha_pago, forma_pago)
+    VALUES (p_empresa_id, p_cliente_id, p_venta_id, p_monto, p_fecha_pago, p_forma_pago);
+    
+    COMMIT;
+    
+    SELECT JSON_OBJECT('status', 'success', 'message', 'Pago de crédito registrado') AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_pagar_proveedor` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_pagar_proveedor`(
+    IN p_empresa_id INT,
+    IN p_proveedor_id INT,
+    IN p_compra_id INT,
+    IN p_monto DECIMAL(12,2),
+    IN p_fecha_pago DATE,
+    IN p_forma_pago VARCHAR(50)
+)
+BEGIN
+    DECLARE v_saldo_compra DECIMAL(12,2);
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Error al registrar pago a proveedor') AS result;
+    END;
+    
+    START TRANSACTION;
+    
+    IF p_compra_id IS NOT NULL THEN
+        SELECT saldo_pendiente INTO v_saldo_compra FROM compras WHERE id = p_compra_id FOR UPDATE;
+        IF p_monto > v_saldo_compra THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El monto supera el saldo pendiente de la compra';
+        END IF;
+    END IF;
+    
+    INSERT INTO pagos_proveedores (empresa_id, proveedor_id, compra_id, monto, fecha_pago, forma_pago)
+    VALUES (p_empresa_id, p_proveedor_id, p_compra_id, p_monto, p_fecha_pago, p_forma_pago);
+    
+    COMMIT;
+    
+    SELECT JSON_OBJECT('status', 'success', 'message', 'Pago registrado') AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_pagos_clientes_periodo_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_pagos_clientes_periodo_json`(
+    IN p_empresa_id INT,
+    IN p_desde DATE,
+    IN p_hasta DATE,
+    IN p_search VARCHAR(100),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT;
+    DECLARE v_total INT;
+    DECLARE v_result JSON;
+    
+    IF p_page IS NULL OR p_page < 1 THEN SET p_page = 1; END IF;
+    IF p_limit IS NULL OR p_limit < 1 THEN SET p_limit = 10; END IF;
+    IF p_limit > 100 THEN SET p_limit = 100; END IF;
+    SET v_offset = (p_page - 1) * p_limit;
+    
+    SET @search_cond = IF(p_search IS NOT NULL AND p_search != '',
+        CONCAT(' AND (CONCAT(c.nombre, " ", IFNULL(c.apellido, "")) LIKE "%', p_search, '%" OR pc.referencia LIKE "%', p_search, '%")'),
+        '');
+    SET @empresa_cond = IF(p_empresa_id IS NOT NULL, CONCAT(' AND pc.empresa_id = ', p_empresa_id), '');
+    SET @fecha_cond = CONCAT(' AND (', IF(p_desde IS NOT NULL, CONCAT('pc.fecha_pago >= "', p_desde, '"'), '1=1'), ' AND ', IF(p_hasta IS NOT NULL, CONCAT('pc.fecha_pago <= "', p_hasta, '"'), '1=1'), ')');
+    
+    -- Total
+    SET @sql_count = CONCAT('
+        SELECT COUNT(*) INTO @v_total
+        FROM pagos_clientes pc
+        INNER JOIN clientes c ON pc.cliente_id = c.id
+        WHERE 1=1
+        ', @empresa_cond, @fecha_cond, @search_cond);
+    PREPARE stmt_count FROM @sql_count;
+    EXECUTE stmt_count;
+    DEALLOCATE PREPARE stmt_count;
+    SET v_total = @v_total;
+    
+    -- Datos
+    SET @sql_data = CONCAT('
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                "id", pc.id,
+                "fecha_pago", pc.fecha_pago,
+                "cliente", CONCAT(c.nombre, " ", IFNULL(c.apellido, "")),
+                "monto", pc.monto,
+                "forma_pago", pc.forma_pago,
+                "referencia", pc.referencia,
+                "venta_id", pc.venta_id
+            )
+        ), JSON_ARRAY()) INTO @v_result
+        FROM pagos_clientes pc
+        INNER JOIN clientes c ON pc.cliente_id = c.id
+        WHERE 1=1
+        ', @empresa_cond, @fecha_cond, @search_cond, '
+        ORDER BY pc.fecha_pago DESC
+        LIMIT ', v_offset, ', ', p_limit);
+    PREPARE stmt_data FROM @sql_data;
+    EXECUTE stmt_data;
+    DEALLOCATE PREPARE stmt_data;
+    SET v_result = @v_result;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'data', v_result,
+        'pagination', JSON_OBJECT(
+            'current_page', p_page,
+            'per_page', p_limit,
+            'total', v_total,
+            'last_page', CEIL(v_total / p_limit),
+            'from', IF(v_total = 0, 0, v_offset + 1),
+            'to', LEAST(v_offset + p_limit, v_total)
+        )
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_pagos_proveedores_periodo_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_pagos_proveedores_periodo_json`(
+    IN p_empresa_id INT,
+    IN p_desde DATE,
+    IN p_hasta DATE,
+    IN p_search VARCHAR(100),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT;
+    DECLARE v_total INT;
+    DECLARE v_result JSON;
+    
+    IF p_page IS NULL OR p_page < 1 THEN SET p_page = 1; END IF;
+    IF p_limit IS NULL OR p_limit < 1 THEN SET p_limit = 10; END IF;
+    IF p_limit > 100 THEN SET p_limit = 100; END IF;
+    SET v_offset = (p_page - 1) * p_limit;
+    
+    SET @search_cond = IF(p_search IS NOT NULL AND p_search != '',
+        CONCAT(' AND (pr.nombre LIKE "%', p_search, '%" OR pp.referencia LIKE "%', p_search, '%")'),
+        '');
+    SET @empresa_cond = IF(p_empresa_id IS NOT NULL, CONCAT(' AND pp.empresa_id = ', p_empresa_id), '');
+    SET @fecha_cond = CONCAT(' AND (', IF(p_desde IS NOT NULL, CONCAT('pp.fecha_pago >= "', p_desde, '"'), '1=1'), ' AND ', IF(p_hasta IS NOT NULL, CONCAT('pp.fecha_pago <= "', p_hasta, '"'), '1=1'), ')');
+    
+    -- Total
+    SET @sql_count = CONCAT('
+        SELECT COUNT(*) INTO @v_total
+        FROM pagos_proveedores pp
+        INNER JOIN proveedores pr ON pp.proveedor_id = pr.id
+        WHERE 1=1
+        ', @empresa_cond, @fecha_cond, @search_cond);
+    PREPARE stmt_count FROM @sql_count;
+    EXECUTE stmt_count;
+    DEALLOCATE PREPARE stmt_count;
+    SET v_total = @v_total;
+    
+    -- Datos
+    SET @sql_data = CONCAT('
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                "id", pp.id,
+                "fecha_pago", pp.fecha_pago,
+                "proveedor", pr.nombre,
+                "monto", pp.monto,
+                "forma_pago", pp.forma_pago,
+                "referencia", pp.referencia,
+                "compra_id", pp.compra_id
+            )
+        ), JSON_ARRAY()) INTO @v_result
+        FROM pagos_proveedores pp
+        INNER JOIN proveedores pr ON pp.proveedor_id = pr.id
+        WHERE 1=1
+        ', @empresa_cond, @fecha_cond, @search_cond, '
+        ORDER BY pp.fecha_pago DESC
+        LIMIT ', v_offset, ', ', p_limit);
+    PREPARE stmt_data FROM @sql_data;
+    EXECUTE stmt_data;
+    DEALLOCATE PREPARE stmt_data;
+    SET v_result = @v_result;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'data', v_result,
+        'pagination', JSON_OBJECT(
+            'current_page', p_page,
+            'per_page', p_limit,
+            'total', v_total,
+            'last_page', CEIL(v_total / p_limit),
+            'from', IF(v_total = 0, 0, v_offset + 1),
+            'to', LEAST(v_offset + p_limit, v_total)
+        )
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_productos_con_precios_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_productos_con_precios_json`(
+    IN p_empresa_id INT,
+    IN p_search VARCHAR(100),
+    IN p_categoria_id INT,
+    IN p_marca_id INT,
+    IN p_tipo_producto VARCHAR(20),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT;
+    DECLARE v_total INT;
+    DECLARE v_result JSON;
+    
+    IF p_empresa_id IS NULL THEN
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Se requiere empresa_id') AS result;
+    ELSE
+        IF p_page IS NULL OR p_page < 1 THEN SET p_page = 1; END IF;
+        IF p_limit IS NULL OR p_limit < 1 THEN SET p_limit = 10; END IF;
+        IF p_limit > 100 THEN SET p_limit = 100; END IF;
+        SET v_offset = (p_page - 1) * p_limit;
+        
+        -- Construir condiciones
+        SET @search_cond = IF(p_search IS NOT NULL AND p_search != '',
+            CONCAT(
+				' AND (p.nombre LIKE "%', p_search, 
+                '%" OR p.descripcion LIKE "%', p_search,
+                '%" OR p.codigo_principal LIKE "%', p_search, '%")'),
+            '');
+        SET @cat_cond = IF(p_categoria_id IS NOT NULL, CONCAT(' AND p.categoria_id = ', p_categoria_id), '');
+        SET @marca_cond = IF(p_marca_id IS NOT NULL, CONCAT(' AND p.marca_id = ', p_marca_id), '');
+        SET @tipo_cond = IF(p_tipo_producto IS NOT NULL AND p_tipo_producto != '', CONCAT(' AND p.tipo_producto = "', p_tipo_producto, '"'), '');
+        
+        -- Total
+        SET @sql_count = CONCAT('
+            SELECT COUNT(*) INTO @v_total
+            FROM productos p
+            WHERE p.activo = 1
+            ', @search_cond, @cat_cond, @marca_cond, @tipo_cond);
+        PREPARE stmt_count FROM @sql_count;
+        EXECUTE stmt_count;
+        DEALLOCATE PREPARE stmt_count;
+        SET v_total = @v_total;
+        
+        -- Datos con componentes para productos compuestos
+        SET @sql_data = CONCAT('
+            SELECT IFNULL(JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    "id", p.id,
+                    "codigo", p.codigo_principal,
+                    "nombre", p.nombre,
+                    "categoria", c.nombre,
+                    "marca", m.nombre,
+                    "tipo", p.tipo_producto,
+                    "precio_compra", pr.precio_compra,
+                    "precio_venta", pr.precio_venta,
+                    "stock", IF(p.tipo_producto = "compuesto", NULL, i.stock_actual),
+                    "componentes", (
+                        SELECT IFNULL(JSON_ARRAYAGG(
+                            JSON_OBJECT(
+                                "id", pc.producto_componente_id,
+                                "nombre", p2.nombre,
+                                "cantidad", pc.cantidad
+                            )
+                        ), JSON_ARRAY())
+                        FROM productos_componentes pc
+                        INNER JOIN productos p2 ON pc.producto_componente_id = p2.id
+                        WHERE pc.producto_compuesto_id = p.id
+                    )
+                )
+            ), JSON_ARRAY()) INTO @v_result
+            FROM productos p
+            LEFT JOIN categorias c ON p.categoria_id = c.id
+            LEFT JOIN marcas m ON p.marca_id = m.id
+            LEFT JOIN precios pr ON p.id = pr.producto_id AND pr.empresa_id = ', p_empresa_id, ' AND pr.activo = 1
+            LEFT JOIN inventario i ON p.id = i.producto_id AND i.empresa_id = ', p_empresa_id, '
+            WHERE p.activo = 1
+            ', @search_cond, @cat_cond, @marca_cond, @tipo_cond, '
+            ORDER BY p.id
+            LIMIT ', v_offset, ', ', p_limit);
+        PREPARE stmt_data FROM @sql_data;
+        EXECUTE stmt_data;
+        DEALLOCATE PREPARE stmt_data;
+        SET v_result = @v_result;
+        
+        SELECT JSON_OBJECT(
+            'status', 'success',
+            'data', v_result,
+            'pagination', JSON_OBJECT(
+                'current_page', p_page,
+                'per_page', p_limit,
+                'total', v_total,
+                'last_page', CEIL(v_total / p_limit),
+                'from', IF(v_total = 0, 0, v_offset + 1),
+                'to', LEAST(v_offset + p_limit, v_total)
+            )
+        ) AS result;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_productos_stock_minimo_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_productos_stock_minimo_json`(
+    IN p_empresa_id INT,
+    IN p_search VARCHAR(100),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT;
+    DECLARE v_total INT;
+    DECLARE v_result JSON;
+    
+    IF p_page IS NULL OR p_page < 1 THEN SET p_page = 1; END IF;
+    IF p_limit IS NULL OR p_limit < 1 THEN SET p_limit = 10; END IF;
+    IF p_limit > 100 THEN SET p_limit = 100; END IF;
+    SET v_offset = (p_page - 1) * p_limit;
+    
+    SET @search_cond = IF(p_search IS NOT NULL AND p_search != '',
+        CONCAT(' AND (p.nombre LIKE "%', p_search, '%" OR p.codigo_principal LIKE "%', p_search, '%")'),
+        '');
+    SET @empresa_cond = IF(p_empresa_id IS NOT NULL, CONCAT(' AND i.empresa_id = ', p_empresa_id), '');
+    
+    -- Total
+    SET @sql_count = CONCAT('
+        SELECT COUNT(*) INTO @v_total
+        FROM inventario i
+        INNER JOIN productos p ON i.producto_id = p.id
+        WHERE i.stock_actual <= i.stock_minimo
+          AND p.tipo_producto = "simple"
+        ', @empresa_cond, @search_cond);
+    PREPARE stmt_count FROM @sql_count;
+    EXECUTE stmt_count;
+    DEALLOCATE PREPARE stmt_count;
+    SET v_total = @v_total;
+    
+    -- Datos
+    SET @sql_data = CONCAT('
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                "producto_id", p.id,
+                "producto", p.nombre,
+                "codigo", p.codigo_principal,
+                "stock_actual", i.stock_actual,
+                "stock_minimo", i.stock_minimo,
+                "diferencia", i.stock_minimo - i.stock_actual
+            )
+        ), JSON_ARRAY()) INTO @v_result
+        FROM inventario i
+        INNER JOIN productos p ON i.producto_id = p.id
+        WHERE i.stock_actual <= i.stock_minimo
+          AND p.tipo_producto = "simple"
+        ', @empresa_cond, @search_cond, '
+        ORDER BY (i.stock_minimo - i.stock_actual) DESC
+        LIMIT ', v_offset, ', ', p_limit);
+    PREPARE stmt_data FROM @sql_data;
+    EXECUTE stmt_data;
+    DEALLOCATE PREPARE stmt_data;
+    SET v_result = @v_result;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'data', v_result,
+        'pagination', JSON_OBJECT(
+            'current_page', p_page,
+            'per_page', p_limit,
+            'total', v_total,
+            'last_page', CEIL(v_total / p_limit),
+            'from', IF(v_total = 0, 0, v_offset + 1),
+            'to', LEAST(v_offset + p_limit, v_total)
+        )
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_proveedores_deuda_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_proveedores_deuda_json`(
+    IN p_empresa_id INT,
+    IN p_search VARCHAR(100),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT;
+    DECLARE v_total INT;
+    DECLARE v_result JSON;
+    
+    IF p_page IS NULL OR p_page < 1 THEN SET p_page = 1; END IF;
+    IF p_limit IS NULL OR p_limit < 1 THEN SET p_limit = 10; END IF;
+    IF p_limit > 100 THEN SET p_limit = 100; END IF;
+    SET v_offset = (p_page - 1) * p_limit;
+    
+    SET @search_cond = IF(p_search IS NOT NULL AND p_search != '',
+        CONCAT(' AND (p.nombre LIKE "%', p_search, '%" OR p.ruc LIKE "%', p_search, '%" OR p.contacto_nombre LIKE "%', p_search, '%")'),
+        '');
+    SET @empresa_cond = IF(p_empresa_id IS NOT NULL, CONCAT(' AND p.empresa_id = ', p_empresa_id), '');
+    
+    -- Total (proveedores con deuda)
+    SET @sql_count = CONCAT('
+        SELECT COUNT(DISTINCT p.id) INTO @v_total
+        FROM proveedores p
+        INNER JOIN compras c ON p.id = c.proveedor_id
+        WHERE c.saldo_pendiente > 0
+        ', @empresa_cond, @search_cond);
+    PREPARE stmt_count FROM @sql_count;
+    EXECUTE stmt_count;
+    DEALLOCATE PREPARE stmt_count;
+    SET v_total = @v_total;
+    
+    -- Datos
+    SET @sql_data = CONCAT('
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                "id", p.id,
+                "ruc", p.ruc,
+                "nombre", p.nombre,
+                "telefono", p.telefono,
+                "email", p.email,
+                "contacto", p.contacto_nombre,
+                "deuda_total", total_deuda
+            )
+        ), JSON_ARRAY()) INTO @v_result
+        FROM (
+            SELECT p.id, p.ruc, p.nombre, p.telefono, p.email, p.contacto_nombre,
+                   SUM(c.saldo_pendiente) AS total_deuda
+            FROM proveedores p
+            INNER JOIN compras c ON p.id = c.proveedor_id
+            WHERE c.saldo_pendiente > 0
+              ', @empresa_cond, @search_cond, '
+            GROUP BY p.id
+            ORDER BY total_deuda DESC
+            LIMIT ', v_offset, ', ', p_limit, '
+        ) AS p');
+    PREPARE stmt_data FROM @sql_data;
+    EXECUTE stmt_data;
+    DEALLOCATE PREPARE stmt_data;
+    SET v_result = @v_result;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'data', v_result,
+        'pagination', JSON_OBJECT(
+            'current_page', p_page,
+            'per_page', p_limit,
+            'total', v_total,
+            'last_page', CEIL(v_total / p_limit),
+            'from', IF(v_total = 0, 0, v_offset + 1),
+            'to', LEAST(v_offset + p_limit, v_total)
+        )
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_registrar_compra` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_registrar_compra`(
+    IN p_empresa_id INT,
+    IN p_proveedor_id INT,
+    IN p_numero_factura VARCHAR(50),
+    IN p_fecha_compra DATE,
+    IN p_detalle JSON
+)
+BEGIN
+    DECLARE v_total DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_subtotal DECIMAL(12,2) DEFAULT 0;
+    DECLARE v_compra_id INT;
+    DECLARE v_idx INT DEFAULT 0;
+    DECLARE v_len INT;
+    DECLARE v_producto_id INT;
+    DECLARE v_cantidad DECIMAL(12,2);
+    DECLARE v_precio DECIMAL(12,2);
+    DECLARE v_line_subtotal DECIMAL(12,2);
+    DECLARE v_tipo_producto ENUM('simple', 'compuesto');
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1 @sqlstate = RETURNED_SQLSTATE, @errno = MYSQL_ERRNO, @text = MESSAGE_TEXT;
+        ROLLBACK;
+        SELECT JSON_OBJECT(
+            'status', 'error',
+            'message', CONCAT('Error al registrar compra: ', @text),
+            'sqlstate', @sqlstate,
+            'errno', @errno
+        ) AS result;
+    END;
+    
+    START TRANSACTION;
+    
+    -- Validar que todos los productos en la compra sean simples
+    SET v_len = JSON_LENGTH(p_detalle);
+    WHILE v_idx < v_len DO
+        SET v_producto_id = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', v_idx, '].producto_id')));
+        SELECT tipo_producto INTO v_tipo_producto FROM productos WHERE id = v_producto_id;
+        IF v_tipo_producto = 'compuesto' THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se pueden comprar productos compuestos directamente';
+        END IF;
+        SET v_idx = v_idx + 1;
+    END WHILE;
+    
+    -- Calcular totales
+    SET v_idx = 0;
+    WHILE v_idx < v_len DO
+        SET v_producto_id = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', v_idx, '].producto_id')));
+        SET v_cantidad = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', v_idx, '].cantidad')));
+        SET v_precio = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', v_idx, '].precio_compra')));
+        
+        SET v_line_subtotal = v_cantidad * v_precio;
+        SET v_subtotal = v_subtotal + v_line_subtotal;
+        SET v_total = v_total + v_line_subtotal;
+        
+        SET v_idx = v_idx + 1;
+    END WHILE;
+    
+    -- Insertar cabecera
+    INSERT INTO compras (empresa_id, proveedor_id, numero_factura, fecha_compra, subtotal, total, saldo_pendiente, estado)
+    VALUES (p_empresa_id, p_proveedor_id, p_numero_factura, p_fecha_compra, v_subtotal, v_total, v_total, 'PENDIENTE');
+    
+    SET v_compra_id = LAST_INSERT_ID();
+    
+    -- Insertar detalle y actualizar inventario
+    SET v_idx = 0;
+    WHILE v_idx < v_len DO
+        SET v_producto_id = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', v_idx, '].producto_id')));
+        SET v_cantidad = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', v_idx, '].cantidad')));
+        SET v_precio = JSON_UNQUOTE(JSON_EXTRACT(p_detalle, CONCAT('$[', v_idx, '].precio_compra')));
+        SET v_line_subtotal = v_cantidad * v_precio;
+        
+        INSERT INTO compras_detalle (compra_id, producto_id, cantidad, precio_compra, subtotal, total)
+        VALUES (v_compra_id, v_producto_id, v_cantidad, v_precio, v_line_subtotal, v_line_subtotal);
+        
+        -- Actualizar precio de compra en tabla precios (para producto simple)
+        UPDATE precios 
+        SET precio_compra = v_precio, updated_at = NOW()
+        WHERE empresa_id = p_empresa_id AND producto_id = v_producto_id;
+        
+        SET v_idx = v_idx + 1;
+    END WHILE;
+    
+    COMMIT;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'message', 'Compra registrada',
+        'compra_id', v_compra_id,
+        'total', v_total
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_reporte_clientes_credito_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_clientes_credito_json`(IN p_empresa_id INT)
+BEGIN
+    DECLARE v_clientes JSON;
+    
+    SELECT IFNULL(JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'cliente_id', c.id,
+            'nombre_completo', CONCAT(c.nombre, ' ', IFNULL(c.apellido, '')),
+            'documento', c.numero_documento,
+            'telefono', c.telefono,
+            'email', c.email,
+            'limite_credito', c.limite_credito,
+            'saldo_actual', c.saldo_credito,
+            'disponible', c.limite_credito - c.saldo_credito
+        )
+    ), JSON_ARRAY()) INTO v_clientes
+    FROM clientes c
+    WHERE c.empresa_id = p_empresa_id
+        AND c.saldo_credito > 0
+        AND c.activo = 1
+    ORDER BY c.saldo_credito DESC;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'empresa_id', p_empresa_id,
+        'total_clientes_con_deuda', JSON_LENGTH(v_clientes),
+        'clientes', v_clientes
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_reporte_compras_periodo_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_compras_periodo_json`(
+    IN p_empresa_id INT,
+    IN p_fecha_inicio DATE,
+    IN p_fecha_fin DATE
+)
+BEGIN
+    DECLARE v_compras JSON;
+    
+    SELECT IFNULL(JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'id', c.id,
+            'fecha', c.fecha_compra,
+            'factura', c.numero_factura,
+            'proveedor', p.nombre,
+            'total', c.total,
+            'saldo', c.saldo_pendiente,
+            'estado', c.estado
+        )
+    ), JSON_ARRAY()) INTO v_compras
+    FROM compras c
+    INNER JOIN proveedores p ON c.proveedor_id = p.id
+    WHERE c.empresa_id = p_empresa_id
+        AND c.fecha_compra BETWEEN p_fecha_inicio AND p_fecha_fin
+    ORDER BY c.fecha_compra DESC;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'empresa_id', p_empresa_id,
+        'periodo', JSON_OBJECT('inicio', p_fecha_inicio, 'fin', p_fecha_fin),
+        'total_registros', JSON_LENGTH(v_compras),
+        'compras', v_compras
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_reporte_compra_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_compra_json`(IN p_compra_id INT)
+BEGIN
+    DECLARE v_cabecera JSON;
+    DECLARE v_detalle JSON;
+    
+    SELECT JSON_OBJECT(
+        'id', c.id,
+        'fecha', c.fecha_compra,
+        'factura', c.numero_factura,
+        'subtotal', c.subtotal,
+        'impuesto', c.impuesto,
+        'total', c.total,
+        'saldo_pendiente', c.saldo_pendiente,
+        'estado', c.estado,
+        'proveedor', JSON_OBJECT(
+            'id', p.id,
+            'nombre', p.nombre,
+            'ruc', p.ruc,
+            'telefono', p.telefono
+        ),
+        'empresa', JSON_OBJECT(
+            'id', e.id,
+            'nombre', e.nombre,
+            'ruc', e.ruc
+        )
+    ) INTO v_cabecera
+    FROM compras c
+    INNER JOIN proveedores p ON c.proveedor_id = p.id
+    INNER JOIN empresas e ON c.empresa_id = e.id
+    WHERE c.id = p_compra_id;
+    
+    IF v_cabecera IS NULL THEN
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Compra no encontrada') AS result;
+    ELSE
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'producto_id', prod.id,
+                'producto_nombre', prod.nombre,
+                'cantidad', cd.cantidad,
+                'precio_compra', cd.precio_compra,
+                'subtotal', cd.subtotal,
+                'total', cd.total
+            )
+        ), JSON_ARRAY()) INTO v_detalle
+        FROM compras_detalle cd
+        INNER JOIN productos prod ON cd.producto_id = prod.id
+        WHERE cd.compra_id = p_compra_id;
+        
+        SELECT JSON_OBJECT('status', 'success', 'compra', v_cabecera, 'detalle', v_detalle) AS result;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_reporte_pagos_clientes_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_pagos_clientes_json`(
+    IN p_empresa_id INT,
+    IN p_fecha_inicio DATE,
+    IN p_fecha_fin DATE
+)
+BEGIN
+    DECLARE v_pagos JSON;
+    
+    SELECT IFNULL(JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'id', pc.id,
+            'fecha', pc.fecha_pago,
+            'cliente', CONCAT(c.nombre, ' ', IFNULL(c.apellido, '')),
+            'monto', pc.monto,
+            'forma_pago', pc.forma_pago,
+            'referencia', pc.referencia,
+            'venta_id', pc.venta_id
+        )
+    ), JSON_ARRAY()) INTO v_pagos
+    FROM pagos_clientes pc
+    INNER JOIN clientes c ON pc.cliente_id = c.id
+    WHERE pc.empresa_id = p_empresa_id
+        AND pc.fecha_pago BETWEEN p_fecha_inicio AND p_fecha_fin
+    ORDER BY pc.fecha_pago DESC;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'empresa_id', p_empresa_id,
+        'periodo', JSON_OBJECT('inicio', p_fecha_inicio, 'fin', p_fecha_fin),
+        'total_pagos', JSON_LENGTH(v_pagos),
+        'pagos', v_pagos
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_reporte_pagos_proveedores_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_pagos_proveedores_json`(
+    IN p_empresa_id INT,
+    IN p_fecha_inicio DATE,
+    IN p_fecha_fin DATE
+)
+BEGIN
+    DECLARE v_pagos JSON;
+    
+    SELECT IFNULL(JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'id', pp.id,
+            'fecha', pp.fecha_pago,
+            'proveedor', prov.nombre,
+            'monto', pp.monto,
+            'forma_pago', pp.forma_pago,
+            'referencia', pp.referencia,
+            'compra_factura', c.numero_factura
+        )
+    ), JSON_ARRAY()) INTO v_pagos
+    FROM pagos_proveedores pp
+    INNER JOIN proveedores prov ON pp.proveedor_id = prov.id
+    LEFT JOIN compras c ON pp.compra_id = c.id
+    WHERE pp.empresa_id = p_empresa_id
+        AND pp.fecha_pago BETWEEN p_fecha_inicio AND p_fecha_fin
+    ORDER BY pp.fecha_pago DESC;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'empresa_id', p_empresa_id,
+        'periodo', JSON_OBJECT('inicio', p_fecha_inicio, 'fin', p_fecha_fin),
+        'total_pagos', JSON_LENGTH(v_pagos),
+        'pagos', v_pagos
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_reporte_proveedores_deuda_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_proveedores_deuda_json`(IN p_empresa_id INT)
+BEGIN
+    DECLARE v_proveedores JSON;
+    
+    SELECT IFNULL(JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'proveedor_id', p.id,
+            'nombre', p.nombre,
+            'ruc', p.ruc,
+            'telefono', p.telefono,
+            'deuda_total', fn_deuda_proveedor(p.id),
+            'ultima_compra', (SELECT MAX(fecha_compra) FROM compras WHERE proveedor_id = p.id AND estado = 'PENDIENTE')
+        )
+    ), JSON_ARRAY()) INTO v_proveedores
+    FROM proveedores p
+    WHERE p.empresa_id = p_empresa_id
+        AND p.activo = 1
+        AND fn_deuda_proveedor(p.id) > 0
+    ORDER BY fn_deuda_proveedor(p.id) DESC;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'empresa_id', p_empresa_id,
+        'total_proveedores_con_deuda', JSON_LENGTH(v_proveedores),
+        'proveedores', v_proveedores
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_reporte_stock_minimo_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_stock_minimo_json`(IN p_empresa_id INT)
+BEGIN
+    DECLARE v_productos JSON;
+    
+    SELECT IFNULL(JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'producto_id', p.id,
+            'codigo', p.codigo_principal,
+            'nombre', p.nombre,
+            'stock_actual', i.stock_actual,
+            'stock_minimo', i.stock_minimo,
+            'categoria', cat.nombre,
+            'marca', m.nombre
+        )
+    ), JSON_ARRAY()) INTO v_productos
+    FROM inventario i
+    INNER JOIN productos p ON i.producto_id = p.id
+    LEFT JOIN categorias cat ON p.categoria_id = cat.id
+    LEFT JOIN marcas m ON p.marca_id = m.id
+    WHERE i.empresa_id = p_empresa_id
+        AND i.stock_actual <= i.stock_minimo
+        AND p.activo = 1
+    ORDER BY (i.stock_actual / NULLIF(i.stock_minimo, 0)) ASC;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'empresa_id', p_empresa_id,
+        'total_productos_criticos', JSON_LENGTH(v_productos),
+        'productos', v_productos
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_reporte_top_productos_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_top_productos_json`(
+    IN p_empresa_id INT,
+    IN p_fecha_inicio DATE,
+    IN p_fecha_fin DATE,
+    IN p_limite INT
+)
+BEGIN
+    DECLARE v_top JSON;
+    
+    SET p_limite = IFNULL(p_limite, 10);
+    
+    SELECT IFNULL(JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'producto_id', p.id,
+            'codigo', p.codigo_principal,
+            'nombre', p.nombre,
+            'categoria', cat.nombre,
+            'total_vendido', total_cantidad,
+            'ingreso_total', total_ingreso
+        )
+    ), JSON_ARRAY()) INTO v_top
+    FROM (
+        SELECT vd.producto_id,
+               SUM(vd.cantidad) AS total_cantidad,
+               SUM(vd.total) AS total_ingreso
+        FROM ventas_detalle vd
+        INNER JOIN ventas v ON vd.venta_id = v.id
+        WHERE v.empresa_id = p_empresa_id
+            AND v.estado = 'COMPLETADA'
+            AND DATE(v.fecha_venta) BETWEEN p_fecha_inicio AND p_fecha_fin
+        GROUP BY vd.producto_id
+        ORDER BY total_cantidad DESC
+        LIMIT p_limite
+    ) AS stats
+    INNER JOIN productos p ON stats.producto_id = p.id
+    LEFT JOIN categorias cat ON p.categoria_id = cat.id
+    ORDER BY stats.total_cantidad DESC;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'empresa_id', p_empresa_id,
+        'periodo', JSON_OBJECT('inicio', p_fecha_inicio, 'fin', p_fecha_fin),
+        'limite', p_limite,
+        'productos', v_top
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_reporte_ventas_periodo_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_ventas_periodo_json`(
+    IN p_empresa_id INT,
+    IN p_fecha_inicio DATE,
+    IN p_fecha_fin DATE
+)
+BEGIN
+    DECLARE v_ventas JSON;
+    
+    SELECT IFNULL(JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'id', v.id,
+            'fecha', v.fecha_venta,
+            'cliente', CONCAT(IFNULL(c.nombre, 'Consumidor Final'), ' ', IFNULL(c.apellido, '')),
+            'tipo', v.tipo_venta,
+            'total', v.total,
+            'estado', v.estado
+        )
+    ), JSON_ARRAY()) INTO v_ventas
+    FROM ventas v
+    LEFT JOIN clientes c ON v.cliente_id = c.id
+    WHERE v.empresa_id = p_empresa_id
+        AND DATE(v.fecha_venta) BETWEEN p_fecha_inicio AND p_fecha_fin
+    ORDER BY v.fecha_venta DESC;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'empresa_id', p_empresa_id,
+        'periodo', JSON_OBJECT('inicio', p_fecha_inicio, 'fin', p_fecha_fin),
+        'total_registros', JSON_LENGTH(v_ventas),
+        'ventas', v_ventas
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_reporte_venta_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_reporte_venta_json`(IN p_venta_id INT)
+BEGIN
+    DECLARE v_cabecera JSON;
+    DECLARE v_detalle JSON;
+    DECLARE v_result JSON;
+    
+    -- Cabecera
+    SELECT JSON_OBJECT(
+        'id', v.id,
+        'fecha', v.fecha_venta,
+        'tipo', v.tipo_venta,
+        'subtotal', v.subtotal,
+        'impuesto', v.impuesto,
+        'total', v.total,
+        'estado', v.estado,
+        'cliente', JSON_OBJECT(
+            'id', c.id,
+            'nombre', CONCAT(c.nombre, ' ', IFNULL(c.apellido, '')),
+            'documento', c.numero_documento,
+            'telefono', c.telefono
+        ),
+        'empresa', JSON_OBJECT(
+            'id', e.id,
+            'nombre', e.nombre,
+            'ruc', e.ruc
+        )
+    ) INTO v_cabecera
+    FROM ventas v
+    LEFT JOIN clientes c ON v.cliente_id = c.id
+    INNER JOIN empresas e ON v.empresa_id = e.id
+    WHERE v.id = p_venta_id;
+    
+    IF v_cabecera IS NULL THEN
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Venta no encontrada') AS result;
+    ELSE
+        -- Detalle
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'producto_id', p.id,
+                'producto_nombre', p.nombre,
+                'cantidad', vd.cantidad,
+                'precio_unitario', vd.precio_venta,
+                'descuento', vd.descuento,
+                'subtotal', vd.subtotal,
+                'total', vd.total
+            )
+        ), JSON_ARRAY()) INTO v_detalle
+        FROM ventas_detalle vd
+        INNER JOIN productos p ON vd.producto_id = p.id
+        WHERE vd.venta_id = p_venta_id;
+        
+        SET v_result = JSON_OBJECT(
+            'status', 'success',
+            'venta', v_cabecera,
+            'detalle', v_detalle
+        );
+        SELECT v_result AS result;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_top_productos_vendidos_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_top_productos_vendidos_json`(
+    IN p_empresa_id INT,
+    IN p_desde DATE,
+    IN p_hasta DATE,
+    IN p_search VARCHAR(100),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT;
+    DECLARE v_total INT;
+    DECLARE v_result JSON;
+    
+    IF p_page IS NULL OR p_page < 1 THEN SET p_page = 1; END IF;
+    IF p_limit IS NULL OR p_limit < 1 THEN SET p_limit = 10; END IF;
+    IF p_limit > 100 THEN SET p_limit = 100; END IF;
+    SET v_offset = (p_page - 1) * p_limit;
+    
+    SET @search_cond = IF(p_search IS NOT NULL AND p_search != '',
+        CONCAT(' AND (p.nombre LIKE "%', p_search, '%" OR p.codigo_principal LIKE "%', p_search, '%")'),
+        '');
+    SET @empresa_cond = IF(p_empresa_id IS NOT NULL, CONCAT(' AND v.empresa_id = ', p_empresa_id), '');
+    SET @fecha_cond = CONCAT(' AND (', IF(p_desde IS NOT NULL, CONCAT('DATE(v.fecha_venta) >= "', p_desde, '"'), '1=1'), ' AND ', IF(p_hasta IS NOT NULL, CONCAT('DATE(v.fecha_venta) <= "', p_hasta, '"'), '1=1'), ')');
+    
+    -- Total de productos distintos que cumplen filtros
+    SET @sql_count = CONCAT('
+        SELECT COUNT(DISTINCT vd.producto_id) INTO @v_total
+        FROM ventas_detalle vd
+        INNER JOIN ventas v ON vd.venta_id = v.id
+        INNER JOIN productos p ON vd.producto_id = p.id
+        WHERE 1=1
+        ', @empresa_cond, @fecha_cond, @search_cond);
+    PREPARE stmt_count FROM @sql_count;
+    EXECUTE stmt_count;
+    DEALLOCATE PREPARE stmt_count;
+    SET v_total = @v_total;
+    
+    -- Datos
+    SET @sql_data = CONCAT('
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                "producto_id", p.id,
+                "producto", p.nombre,
+                "codigo", p.codigo_principal,
+                "total_vendido", total_vendido,
+                "ingreso_total", ingreso_total
+            )
+        ), JSON_ARRAY()) INTO @v_result
+        FROM (
+            SELECT vd.producto_id,
+                   SUM(vd.cantidad) AS total_vendido,
+                   SUM(vd.total) AS ingreso_total
+            FROM ventas_detalle vd
+            INNER JOIN ventas v ON vd.venta_id = v.id
+            WHERE 1=1
+            ', @empresa_cond, @fecha_cond, '
+            GROUP BY vd.producto_id
+            ORDER BY total_vendido DESC
+            LIMIT ', v_offset, ', ', p_limit, '
+        ) AS stats
+        INNER JOIN productos p ON stats.producto_id = p.id
+        WHERE 1=1
+        ', @search_cond);
+    PREPARE stmt_data FROM @sql_data;
+    EXECUTE stmt_data;
+    DEALLOCATE PREPARE stmt_data;
+    SET v_result = @v_result;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'data', v_result,
+        'pagination', JSON_OBJECT(
+            'current_page', p_page,
+            'per_page', p_limit,
+            'total', v_total,
+            'last_page', CEIL(v_total / p_limit),
+            'from', IF(v_total = 0, 0, v_offset + 1),
+            'to', LEAST(v_offset + p_limit, v_total)
+        )
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_ventas_por_periodo_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_ventas_por_periodo_json`(
+    IN p_desde DATE,
+    IN p_hasta DATE,
+    IN p_empresa_id INT,
+    IN p_search VARCHAR(100),
+    IN p_estado VARCHAR(20),
+    IN p_tipo_venta VARCHAR(10),
+    IN p_page INT,
+    IN p_limit INT
+)
+BEGIN
+    DECLARE v_offset INT;
+    DECLARE v_total INT;
+    DECLARE v_result JSON;
+    
+    IF p_page IS NULL OR p_page < 1 THEN SET p_page = 1; END IF;
+    IF p_limit IS NULL OR p_limit < 1 THEN SET p_limit = 10; END IF;
+    IF p_limit > 100 THEN SET p_limit = 100; END IF;
+    SET v_offset = (p_page - 1) * p_limit;
+    
+    -- Condiciones
+    SET @search_cond = IF(p_search IS NOT NULL AND p_search != '',
+        CONCAT(' AND (CONCAT(c.nombre, " ", IFNULL(c.apellido, "")) LIKE "%', p_search, '%" OR v.id = ', p_search, ')'),
+        '');
+    SET @estado_cond = IF(p_estado IS NOT NULL AND p_estado != '', CONCAT(' AND v.estado = "', p_estado, '"'), '');
+    SET @tipo_cond = IF(p_tipo_venta IS NOT NULL AND p_tipo_venta != '', CONCAT(' AND v.tipo_venta = "', p_tipo_venta, '"'), '');
+    SET @empresa_cond = IF(p_empresa_id IS NOT NULL, CONCAT(' AND v.empresa_id = ', p_empresa_id), '');
+    SET @fecha_cond = CONCAT(' AND (', IF(p_desde IS NOT NULL, CONCAT('DATE(v.fecha_venta) >= "', p_desde, '"'), '1=1'), ' AND ', IF(p_hasta IS NOT NULL, CONCAT('DATE(v.fecha_venta) <= "', p_hasta, '"'), '1=1'), ')');
+    
+    -- Total
+    SET @sql_count = CONCAT('
+        SELECT COUNT(*) INTO @v_total
+        FROM ventas v
+        LEFT JOIN clientes c ON v.cliente_id = c.id
+        WHERE 1=1
+        ', @empresa_cond, @fecha_cond, @search_cond, @estado_cond, @tipo_cond);
+    PREPARE stmt_count FROM @sql_count;
+    EXECUTE stmt_count;
+    DEALLOCATE PREPARE stmt_count;
+    SET v_total = @v_total;
+    
+    -- Datos
+    SET @sql_data = CONCAT('
+        SELECT IFNULL(JSON_ARRAYAGG(
+            JSON_OBJECT(
+                "id", v.id,
+                "fecha_venta", v.fecha_venta,
+                "cliente", CONCAT(c.nombre, " ", IFNULL(c.apellido, "")),
+                "tipo_venta", v.tipo_venta,
+                "total", v.total,
+                "saldo_pendiente", v.saldo_pendiente,
+                "estado", v.estado
+            )
+        ), JSON_ARRAY()) INTO @v_result
+        FROM ventas v
+        LEFT JOIN clientes c ON v.cliente_id = c.id
+        WHERE 1=1
+        ', @empresa_cond, @fecha_cond, @search_cond, @estado_cond, @tipo_cond, '
+        ORDER BY v.fecha_venta DESC
+        LIMIT ', v_offset, ', ', p_limit);
+    PREPARE stmt_data FROM @sql_data;
+    EXECUTE stmt_data;
+    DEALLOCATE PREPARE stmt_data;
+    SET v_result = @v_result;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'data', v_result,
+        'pagination', JSON_OBJECT(
+            'current_page', p_page,
+            'per_page', p_limit,
+            'total', v_total,
+            'last_page', CEIL(v_total / p_limit),
+            'from', IF(v_total = 0, 0, v_offset + 1),
+            'to', LEAST(v_offset + p_limit, v_total)
+        )
+    ) AS result;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_venta_detalle_json` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_venta_detalle_json`(IN p_venta_id INT)
+BEGIN
+    DECLARE v_cabecera JSON;
+    DECLARE v_detalle JSON;
+    
+    SELECT JSON_OBJECT(
+        'id', v.id,
+        'empresa_id', v.empresa_id,
+        'cliente', CONCAT(c.nombre, ' ', IFNULL(c.apellido, '')),
+        'fecha_venta', v.fecha_venta,
+        'subtotal', v.subtotal,
+        'impuesto', v.impuesto,
+        'total', v.total,
+        'tipo_venta', v.tipo_venta,
+        'saldo_pendiente', v.saldo_pendiente,
+        'estado', v.estado
+    ) INTO v_cabecera
+    FROM ventas v
+    LEFT JOIN clientes c ON v.cliente_id = c.id
+    WHERE v.id = p_venta_id;
+    
+    SELECT IFNULL(JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'producto_id', vd.producto_id,
+            'producto', p.nombre,
+            'cantidad', vd.cantidad,
+            'precio_venta', vd.precio_venta,
+            'descuento', vd.descuento,
+            'subtotal', vd.subtotal,
+            'total', vd.total
+        )
+    ), JSON_ARRAY()) INTO v_detalle
+    FROM ventas_detalle vd
+    INNER JOIN productos p ON vd.producto_id = p.id
+    WHERE vd.venta_id = p_venta_id;
+    
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'data', JSON_OBJECT(
+            'cabecera', v_cabecera,
+            'detalle', v_detalle
+        )
+    ) AS result;
 END ;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -372,4 +2394,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-29 18:27:09
+-- Dump completed on 2026-03-31 19:38:41

@@ -41,7 +41,7 @@ CREATE TABLE `rol_menu_permisos` (
   KEY `idx_menu` (`menu_id`),
   CONSTRAINT `rol_menu_permisos_ibfk_1` FOREIGN KEY (`rol_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE,
   CONSTRAINT `rol_menu_permisos_ibfk_2` FOREIGN KEY (`menu_id`) REFERENCES `menus` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=56 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -50,7 +50,7 @@ CREATE TABLE `rol_menu_permisos` (
 
 LOCK TABLES `rol_menu_permisos` WRITE;
 /*!40000 ALTER TABLE `rol_menu_permisos` DISABLE KEYS */;
-INSERT INTO `rol_menu_permisos` VALUES (54,2,1,1,1,1,1,NULL,'2026-03-29 05:32:27','2026-03-29 05:32:27');
+INSERT INTO `rol_menu_permisos` VALUES (54,2,1,1,1,1,1,NULL,'2026-03-29 05:32:27','2026-03-29 05:32:27'),(55,6,2,1,1,1,1,NULL,'2026-03-30 22:03:32','2026-03-30 22:03:32');
 /*!40000 ALTER TABLE `rol_menu_permisos` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -63,4 +63,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-29 18:27:09
+-- Dump completed on 2026-03-31 19:38:39

@@ -5,7 +5,7 @@ namespace App\Controllers;
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-use App\Controllers\DashboardController;
+use App\Controllers\Helper;
 use PDOException;
 use PDO;
 
@@ -21,14 +21,14 @@ class UsuariosController
   public static function listar()
   {
     header('Content-Type: application/json; charset=utf-8');
-    if (!class_exists(DashboardController::class)) {
-      $maybe = __DIR__ . '/DashboardController.php';
+    if (!class_exists(Helper::class)) {
+      $maybe = __DIR__ . '../helpers/Helper.php';
       if (file_exists($maybe)) {
         require_once $maybe;
       }
     }
     // permiso de intervenciones para mantener compatibilidad con modal
-    if (!DashboardController::authorizeSection('alergias')) {
+    if (!Helper::authorizeSection('ver')) {
       http_response_code(403);
       echo json_encode(['success' => false, 'error' => 'access_denied', 'message' => 'Acceso denegado por rol']);
       return;
@@ -51,7 +51,7 @@ class UsuariosController
       $pdo = conectarBaseDatos();
       // no hay stored procedure definido en la base original, pero dejamos el
       // chequeo para que se registre si se agrega en el futuro
-      DashboardController::checkAndLogProcedures($pdo, ['sp_usuarios_listar']);
+      Helper::checkAndLogProcedures($pdo, ['sp_usuarios_listar']);
 
 
       $stmt = $pdo->prepare(
@@ -99,14 +99,14 @@ class UsuariosController
   public static function listarRoles()
   {
     header('Content-Type: application/json; charset=utf-8');
-    if (!class_exists(DashboardController::class)) {
-      $maybe = __DIR__ . '/DashboardController.php';
+    if (!class_exists(Helper::class)) {
+      $maybe = __DIR__ . '../helpers/Helper.php';
       if (file_exists($maybe)) {
         require_once $maybe;
       }
     }
     // permiso de intervenciones para mantener compatibilidad con modal
-    if (!DashboardController::authorizeSection('usuarios')) {
+    if (!Helper::authorizeSection('usuarios')) {
       http_response_code(403);
       echo json_encode(['success' => false, 'error' => 'access_denied', 'message' => 'Acceso denegado por rol']);
       return;
@@ -129,7 +129,7 @@ class UsuariosController
       $pdo = conectarBaseDatos();
       // no hay stored procedure definido en la base original, pero dejamos el
       // chequeo para que se registre si se agrega en el futuro
-      DashboardController::checkAndLogProcedures($pdo, ['sp_roles_list']);
+      Helper::checkAndLogProcedures($pdo, ['sp_roles_list']);
 
 
       $stmt = $pdo->prepare(
@@ -183,13 +183,13 @@ class UsuariosController
   public static function guardar()
   {
     header('Content-Type: application/json; chartset=utf-8');
-    if (!class_exists(DashboardController::class)) {
-      $maybe = __DIR__ . '/DashboardController.php';
+    if (!class_exists(Helper::class)) {
+      $maybe = __DIR__ . '../helpers/Helper.php';
       if (file_exists($maybe)) {
         require_once $maybe;
       }
     }
-    if (!DashboardController::authorizeSection('especialidades')) {
+    if (!Helper::authorizeSection('especialidades')) {
       http_response_code(403);
       echo json_encode(['success' => false, 'error' => 'access_denied', 'message' => 'Acceso denegado por rol']);
       return;
@@ -243,7 +243,7 @@ class UsuariosController
       $sql = "";
       if ($isEdit) {
         if ($id) {
-          DashboardController::checkAndLogProcedures($pdo, ['sp_usuarios_update']);
+          Helper::checkAndLogProcedures($pdo, ['sp_usuarios_update']);
           // Verificar que el paciente exista antes de intentar actualizar
           $checkStmt = $pdo->prepare('SELECT COUNT(*) FROM usuarios WHERE id = :id');
           $checkStmt->execute(['id' => $id]);
@@ -281,7 +281,7 @@ class UsuariosController
 
         $hash = password_hash($password, PASSWORD_BCRYPT);
 
-        DashboardController::checkAndLogProcedures($pdo, ['sp_usuarios_create']);
+        Helper::checkAndLogProcedures($pdo, ['sp_usuarios_create']);
         $stmt = $pdo->prepare(
           'CALL sp_usuarios_create(:cedula, :nombre, :apellido, :password, :telefono, :email, :img_url, :activo, :rol, :user_id, @p_id_generado, @p_mensaje, @p_codigo_resultado)'
         );
@@ -332,13 +332,13 @@ class UsuariosController
   {
     header('Content-Type: application/json; charset=utf-8');
     // autorización genérica mediante sección "insumos" en Dashboard
-    if (!class_exists(DashboardController::class)) {
-      $maybe = __DIR__ . '/DashboardController.php';
+    if (!class_exists(Helper::class)) {
+      $maybe = __DIR__ . '/../helpers/Helper.php';
       if (file_exists($maybe)) {
         require_once $maybe;
       }
     }
-    if (!DashboardController::authorizeSection('insumos')) {
+    if (!Helper::authorizeSection('insumos')) {
       http_response_code(403);
       echo json_encode(['success' => false, 'error' => 'access_denied', 'message' => 'Acceso denegado por rol']);
       return;
@@ -404,7 +404,7 @@ class UsuariosController
 
       // Verificar que todos los procedimientos existen antes de ejecutar
       $nombres_procedimientos = array_column($procedimientos, 'nombre');
-      DashboardController::checkAndLogProcedures($pdo, $nombres_procedimientos);
+      Helper::checkAndLogProcedures($pdo, $nombres_procedimientos);
 
       // Ejecutar cada procedimiento
       foreach ($procedimientos as $proc) {
@@ -499,13 +499,13 @@ class UsuariosController
   public static function eliminarRegistro()
   {
     header('Content-Type: application/json; charset=utf-8');
-    if (!class_exists(DashboardController::class)) {
-      $maybe = __DIR__ . '/DashboardController.php';
+    if (!class_exists(Helper::class)) {
+      $maybe = __DIR__ . '/../helpers/Helper.php';
       if (file_exists($maybe)) {
         require_once $maybe;
       }
     }
-    if (!DashboardController::authorizeSection('usurios')) {
+    if (!Helper::authorizeSection('usurios')) {
       http_response_code(403);
       echo json_encode(['success' => false, 'error' => 'access_denied', 'message' => 'Acceso denegado por rol']);
       return;
@@ -544,7 +544,7 @@ class UsuariosController
 
     try {
       $pdo = conectarBaseDatos();
-      DashboardController::checkAndLogProcedures($pdo, ['sp_usuarios_eliminar']);
+      Helper::checkAndLogProcedures($pdo, ['sp_usuarios_eliminar']);
       $stmt = $pdo->prepare('CALL sp_usuarios_eliminar(:id, :id_usuario, @p_mensaje, @p_codigo_resultado)');
       $stmt->execute(['id' => $id, 'id_usuario' => $userId]);
 

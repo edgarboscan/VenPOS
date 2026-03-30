@@ -35,7 +35,7 @@ CREATE TABLE `roles` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `nombre` (`nombre`),
   KEY `idx_nombre` (`nombre`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -44,7 +44,7 @@ CREATE TABLE `roles` (
 
 LOCK TABLES `roles` WRITE;
 /*!40000 ALTER TABLE `roles` DISABLE KEYS */;
-INSERT INTO `roles` VALUES (1,'Super Administrador','Acceso total al sistema','[\"*\"]',1,'2026-02-26 17:15:07','2026-02-26 17:15:07'),(2,'Administrador','Gestión del sistema sin permisos de super','[\"ver_dashboard\", \"gestionar_usuarios\", \"gestionar_roles\", \"ver_reportes\"]',1,'2026-02-26 17:15:07','2026-02-26 17:15:07');
+INSERT INTO `roles` VALUES (1,'Super Administrador','Acceso total al sistema','[\"*\"]',1,'2026-02-26 17:15:07','2026-02-26 17:15:07'),(2,'Administrador','Gestión del sistema sin permisos de super','[\"ver_dashboard\", \"gestionar_usuarios\", \"gestionar_roles\", \"ver_reportes\"]',1,'2026-02-26 17:15:07','2026-02-26 17:15:07'),(6,'Vendedor','Puede realizar ventas y consultas',NULL,1,'2026-03-30 19:45:52','2026-03-30 19:45:52');
 /*!40000 ALTER TABLE `roles` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -57,4 +57,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-29 18:27:08
+-- Dump completed on 2026-03-31 19:38:39

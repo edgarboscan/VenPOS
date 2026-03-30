@@ -56,6 +56,7 @@ class LoginController
       // Depuración: verificar password (se registra solo si config 'debug' está activo)
       $menus = $resultado['acceso']['menus'] ?? [];
       $roles = $resultado['acceso']['roles'] ?? [];
+      $empresas = $resultado['acceso']['empresas'] ?? [];
 
       $verified = false;
       $user_hash = is_array($user) ? ($resultado['seguridad']['password_hash'] ?? null) : null;
@@ -127,6 +128,7 @@ class LoginController
       $_SESSION['usuario'] = $user;
       $_SESSION['menus'] = $menus ?? [];
       $_SESSION['roles'] = $roles ?? [];
+      $_SESSION['empresas'] = $empresas ?? [];
 
       $_SESSION['auth'] = true;
       $_SESSION['start'] = time();
@@ -310,8 +312,14 @@ class LoginController
       $params = session_get_cookie_params();
       setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
     }
+
+    @session_unset();
     @session_destroy();
     echo json_encode(['mensaje' => 'Logout exitoso', 'success' => true]);
+
+
+
+
     return;
   }
 

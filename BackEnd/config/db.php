@@ -2,6 +2,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+use App\Controllers\Helper;
 // load composer autoload if present (optional)
 if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
   require __DIR__ . '/../vendor/autoload.php';
@@ -98,7 +99,7 @@ function conectarBaseDatos()
 
   try {
     $pdo = new \PDO($dsn, $user, $pass, $options);
-
+    setAppUser($pdo);
     return $pdo;
   } catch (\PDOException $e) {
     // Re-throw the exception so callers can decide how to handle it
@@ -106,4 +107,14 @@ function conectarBaseDatos()
   }
 }
 
-
+function setAppUser($pdo = null)
+{
+  if (isset($_SESSION['usuario_id'])) {
+    Helper::checkAndLogProcedures($pdo, ['call ven_pos.sp_cambiar_empresa_contexto']);
+    $stmt = $pdo->prepare("call ven_pos.sp_cambiar_empresa_contexto(?, ?)");
+    $stmt->execute([$_SESSION['usuario_id'], $_SESSION['empresa_id']]);
+  } else {
+    // Usuario no autenticado (ej. proceso batch)
+    $pdo->exec("SET @app_user_id = NULL, @app_user_name = 'sistema'");
+  }
+}
