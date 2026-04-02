@@ -35,7 +35,7 @@ CREATE TABLE `codigos_productos` (
   UNIQUE KEY `codigo_unico` (`codigo`),
   KEY `fk_codigos_producto` (`producto_id`),
   CONSTRAINT `fk_codigos_producto` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -44,7 +44,7 @@ CREATE TABLE `codigos_productos` (
 
 LOCK TABLES `codigos_productos` WRITE;
 /*!40000 ALTER TABLE `codigos_productos` DISABLE KEYS */;
-INSERT INTO `codigos_productos` VALUES (1,1,'EAN13','4905524112345',1,'2026-03-30 19:31:56'),(2,2,'EAN13','7891234567890',1,'2026-03-30 19:31:56'),(3,4,'UPC','887276412345',1,'2026-03-30 19:31:56'),(4,9,'EAN13','4905524999999',1,'2026-03-30 19:31:56'),(5,14,'QR','https://samsung.com/tabA8',1,'2026-03-30 19:31:56'),(6,20,'CODIGO_INTERNO','GORRA-NK-001',1,'2026-03-30 19:31:56');
+INSERT INTO `codigos_productos` VALUES (1,1,'EAN13','4905524112345',1,'2026-03-30 19:31:56'),(2,2,'EAN13','7891234567890',1,'2026-03-30 19:31:56'),(3,4,'UPC','887276412345',1,'2026-03-30 19:31:56'),(4,9,'EAN13','4905524999999',1,'2026-03-30 19:31:56'),(5,14,'QR','https://samsung.com/tabA8',1,'2026-03-30 19:31:56'),(6,20,'CODIGO_INTERNO','GORRA-NK-001',1,'2026-03-30 19:31:56'),(13,101,'EAN13','CODIGO INTERNO',1,'2026-04-02 18:38:46');
 /*!40000 ALTER TABLE `codigos_productos` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -57,4 +57,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-31 19:38:38
+-- Dump completed on 2026-04-02 15:11:15

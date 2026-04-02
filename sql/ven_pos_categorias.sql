@@ -33,7 +33,7 @@ CREATE TABLE `categorias` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `nombre` (`nombre`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -42,7 +42,7 @@ CREATE TABLE `categorias` (
 
 LOCK TABLES `categorias` WRITE;
 /*!40000 ALTER TABLE `categorias` DISABLE KEYS */;
-INSERT INTO `categorias` VALUES (1,'Electrónica','Productos electrónicos y gadgets',1,'2026-03-30 19:27:17','2026-03-30 19:27:43'),(2,'Ropa','Prendas de vestir',1,'2026-03-30 19:27:17','2026-03-30 19:27:43'),(3,'Alimentos','Productos alimenticios no perecederos',1,'2026-03-30 19:27:17','2026-03-30 19:27:43'),(4,'Hogar','Artículos para el hogar',1,'2026-03-30 19:27:17','2026-03-30 19:27:43'),(5,'Deportes','Equipo deportivo',1,'2026-03-30 19:27:17','2026-03-30 19:27:43'),(6,'Ferretria','Ferreteira, Materiales de contruccion',1,'2026-03-31 17:20:04','2026-03-31 17:20:10');
+INSERT INTO `categorias` VALUES (1,'Electrónica','Productos electrónicos y gadgets',1,'2026-03-30 19:27:17','2026-03-30 19:27:43'),(2,'Ropa','Prendas de vestir',1,'2026-03-30 19:27:17','2026-03-30 19:27:43'),(3,'Alimentos','Productos alimenticios no perecederos',1,'2026-03-30 19:27:17','2026-03-30 19:27:43'),(4,'Hogar','Artículos para el hogar',1,'2026-03-30 19:27:17','2026-03-30 19:27:43'),(5,'Deportes','Equipo deportivo',1,'2026-03-30 19:27:17','2026-03-30 19:27:43'),(6,'Ferretria','Ferreteira, Materiales de contruccion',1,'2026-03-31 17:20:04','2026-03-31 17:20:10'),(7,'Viveres','Viveres en general',1,'2026-04-02 17:52:31','2026-04-02 17:52:38');
 /*!40000 ALTER TABLE `categorias` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -55,4 +55,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-31 19:38:39
+-- Dump completed on 2026-04-02 15:11:16

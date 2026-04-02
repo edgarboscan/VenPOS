@@ -30,7 +30,7 @@ CREATE TABLE `formas_pago` (
   `activo` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `nombre` (`nombre`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -39,7 +39,7 @@ CREATE TABLE `formas_pago` (
 
 LOCK TABLES `formas_pago` WRITE;
 /*!40000 ALTER TABLE `formas_pago` DISABLE KEYS */;
-INSERT INTO `formas_pago` VALUES (1,'EFECTIVO',1),(2,'TARJETA_CREDITO',1),(3,'TARJETA_DEBITO',1),(4,'TRANSFERENCIA',1),(5,'CHEQUE',1),(6,'CREDITO',1);
+INSERT INTO `formas_pago` VALUES (1,'EFECTIVO',1),(2,'TARJETA_CREDITO',1),(3,'TARJETA_DEBITO',1),(4,'TRANSFERENCIA',1),(5,'CHEQUE',1),(6,'CREDITO',1),(7,'PAGO MOVIL',1);
 /*!40000 ALTER TABLE `formas_pago` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -52,4 +52,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-31 19:38:38
+-- Dump completed on 2026-04-02 15:11:12

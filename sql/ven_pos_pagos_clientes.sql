@@ -42,7 +42,7 @@ CREATE TABLE `pagos_clientes` (
   CONSTRAINT `fk_pago_cliente` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_pago_cliente_empresa` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_pago_venta` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -51,7 +51,7 @@ CREATE TABLE `pagos_clientes` (
 
 LOCK TABLES `pagos_clientes` WRITE;
 /*!40000 ALTER TABLE `pagos_clientes` DISABLE KEYS */;
-INSERT INTO `pagos_clientes` VALUES (4,1,2,8,100.00,'2026-03-20','TRANSFERENCIA',NULL,'2026-03-30 19:39:18'),(5,2,4,10,50.00,'2026-03-21','EFECTIVO',NULL,'2026-03-30 19:39:22'),(6,1,1,12,150.00,'2026-03-22','EFECTIVO',NULL,'2026-03-30 19:39:25');
+INSERT INTO `pagos_clientes` VALUES (4,1,2,8,100.00,'2026-03-20','TRANSFERENCIA',NULL,'2026-03-30 19:39:18'),(5,2,4,10,50.00,'2026-03-21','EFECTIVO',NULL,'2026-03-30 19:39:22'),(6,1,1,12,150.00,'2026-03-22','EFECTIVO',NULL,'2026-03-30 19:39:25'),(9,1,2,8,50.00,'2026-04-01','Efectivo',NULL,'2026-04-01 14:29:08');
 /*!40000 ALTER TABLE `pagos_clientes` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -92,4 +92,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-31 19:38:39
+-- Dump completed on 2026-04-02 15:11:14

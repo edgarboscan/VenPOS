@@ -60,16 +60,19 @@ UNLOCK TABLES;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_compra_detalle_after_insert` AFTER INSERT ON `compras_detalle` FOR EACH ROW BEGIN
-    -- Obtener empresa_id desde la compra cabecera
     DECLARE v_empresa_id INT;
-    SELECT empresa_id INTO v_empresa_id FROM compras WHERE id = NEW.compra_id;
+    DECLARE v_maneja_inventario TINYINT(1);
     
-    -- Actualizar o insertar inventario
-    INSERT INTO inventario (empresa_id, producto_id, stock_actual, ultima_actualizacion)
-    VALUES (v_empresa_id, NEW.producto_id, NEW.cantidad, NOW())
-    ON DUPLICATE KEY UPDATE 
-        stock_actual = stock_actual + NEW.cantidad,
-        ultima_actualizacion = NOW();
+    SELECT empresa_id INTO v_empresa_id FROM compras WHERE id = NEW.compra_id;
+    SELECT maneja_inventario INTO v_maneja_inventario FROM productos WHERE id = NEW.producto_id;
+    
+    IF v_maneja_inventario = 1 THEN
+        INSERT INTO inventario (empresa_id, producto_id, stock_actual, ultima_actualizacion)
+        VALUES (v_empresa_id, NEW.producto_id, NEW.cantidad, NOW())
+        ON DUPLICATE KEY UPDATE 
+            stock_actual = stock_actual + NEW.cantidad,
+            ultima_actualizacion = NOW();
+    END IF;
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -86,4 +89,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-31 19:38:40
+-- Dump completed on 2026-04-02 15:11:13

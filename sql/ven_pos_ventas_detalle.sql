@@ -60,9 +60,10 @@ UNLOCK TABLES;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_venta_detalle_after_insert` AFTER INSERT ON `ventas_detalle` FOR EACH ROW BEGIN
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `tr_venta_detalle_after_insert` AFTER INSERT ON `ventas_detalle` FOR EACH ROW trg_block: BEGIN
     DECLARE v_empresa_id INT;
     DECLARE v_tipo_producto ENUM('simple', 'compuesto');
+    DECLARE v_maneja_inventario TINYINT(1);
     DECLARE v_compuesto_id INT;
     DECLARE v_cantidad_compuesto DECIMAL(12,4);
     DECLARE v_componente_id INT;
@@ -76,10 +77,16 @@ DELIMITER ;;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done = 1;
 
     SELECT empresa_id INTO v_empresa_id FROM ventas WHERE id = NEW.venta_id;
-    SELECT tipo_producto INTO v_tipo_producto FROM productos WHERE id = NEW.producto_id;
-
+    SELECT tipo_producto, maneja_inventario INTO v_tipo_producto, v_maneja_inventario 
+    FROM productos WHERE id = NEW.producto_id;
+    
+    -- Si no maneja inventario, salir
+    IF v_maneja_inventario = 0 THEN
+        LEAVE trg_block;
+    END IF;
+    
     IF v_tipo_producto = 'compuesto' THEN
-        -- Producto compuesto: descontar sus componentes en inventario
+        -- Producto compuesto: descontar sus componentes
         SET v_compuesto_id = NEW.producto_id;
         SET v_cantidad_compuesto = NEW.cantidad;
 
@@ -95,7 +102,7 @@ DELIMITER ;;
             SET stock_actual = stock_actual - v_cantidad_total_componente,
                 ultima_actualizacion = NOW()
             WHERE empresa_id = v_empresa_id AND producto_id = v_componente_id;
-            -- Si el componente no existe en inventario, podría crearse con stock negativo (opcional)
+            -- Si el componente no existe en inventario, crearlo con stock negativo
             IF ROW_COUNT() = 0 THEN
                 INSERT INTO inventario (empresa_id, producto_id, stock_actual, ultima_actualizacion)
                 VALUES (v_empresa_id, v_componente_id, -v_cantidad_total_componente, NOW());
@@ -108,8 +115,13 @@ DELIMITER ;;
         SET stock_actual = stock_actual - NEW.cantidad,
             ultima_actualizacion = NOW()
         WHERE empresa_id = v_empresa_id AND producto_id = NEW.producto_id;
+        -- Si no existe, crearlo con stock negativo
+        IF ROW_COUNT() = 0 THEN
+            INSERT INTO inventario (empresa_id, producto_id, stock_actual, ultima_actualizacion)
+            VALUES (v_empresa_id, NEW.producto_id, -NEW.cantidad, NOW());
+        END IF;
     END IF;
-END */;;
+END trg_block */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
@@ -125,4 +137,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-31 19:38:40
+-- Dump completed on 2026-04-02 15:11:14

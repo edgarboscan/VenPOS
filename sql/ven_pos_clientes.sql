@@ -54,7 +54,7 @@ CREATE TABLE `clientes` (
 
 LOCK TABLES `clientes` WRITE;
 /*!40000 ALTER TABLE `clientes` DISABLE KEYS */;
-INSERT INTO `clientes` VALUES (1,1,'CEDULA','V-12345678','Carlos','Pérez','Calle 1, Edif. Centro','0412-1234567','cperez@gmail.com',500.00,0.00,1,'2026-03-30 19:35:31','2026-03-30 19:35:31'),(2,1,'RUC','J-98765432','Inversiones López C.A. María','López','Av. Rómulo Gallegos','0212-9876543','mlopez@invlopez.com',1500.00,250.00,1,'2026-03-30 19:35:31','2026-03-30 19:39:18'),(3,2,'CEDULA','V-87654321','Ana','González','Urb. Las Acacias, Casa 23','0416-5556789','agonzalez@yahoo.com',300.00,0.00,1,'2026-03-30 19:35:31','2026-03-30 19:35:31'),(4,2,'PASAPORTE','E-123456','John','Smith','Calle 10, Quinta Smith','0424-1112233','jsmith@hotmail.com',0.00,189.00,1,'2026-03-30 19:35:31','2026-03-30 19:39:22'),(5,3,'CEDULA','V-56789012','Luisa','Fernández','Av. Ppal, Torre Mega, Piso 5','0412-9998877','lfernandez@gmail.com',800.00,0.00,1,'2026-03-30 19:35:31','2026-03-30 19:35:31');
+INSERT INTO `clientes` VALUES (1,1,'CEDULA','V-12345678','Carlos','Pérez','Calle 1, Edif. Centro','0412-1234567','cperez@gmail.com',500.00,0.00,1,'2026-03-30 19:35:31','2026-03-30 19:35:31'),(2,1,'RUC','J-98765432','Inversiones López C.A. María','López','Av. Rómulo Gallegos','0212-9876543','mlopez@invlopez.com',1500.00,200.00,1,'2026-03-30 19:35:31','2026-04-01 14:29:08'),(3,2,'CEDULA','V-87654321','Ana','González','Urb. Las Acacias, Casa 23','0416-5556789','agonzalez@yahoo.com',300.00,0.00,1,'2026-03-30 19:35:31','2026-03-30 19:35:31'),(4,2,'PASAPORTE','E-123456','John','Smith','Calle 10, Quinta Smith','0424-1112233','jsmith@hotmail.com',0.00,189.00,1,'2026-03-30 19:35:31','2026-03-30 19:39:22'),(5,3,'CEDULA','V-56789012','Luisa','Fernández','Av. Ppal, Torre Mega, Piso 5','0412-9998877','lfernandez@gmail.com',800.00,0.00,1,'2026-03-30 19:35:31','2026-03-30 19:35:31');
 /*!40000 ALTER TABLE `clientes` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -92,4 +92,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-31 19:38:40
+-- Dump completed on 2026-04-02 15:11:13
