@@ -1,10 +1,10 @@
 CREATE DATABASE  IF NOT EXISTS `ven_pos` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `ven_pos`;
--- MySQL dump 10.13  Distrib 8.0.44, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.45, for Win64 (x86_64)
 --
 -- Host: localhost    Database: ven_pos
 -- ------------------------------------------------------
--- Server version	8.0.45
+-- Server version	8.0.44
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -2714,7 +2714,7 @@ BEGIN
                         "marca_id", fp.marca_id,
                         "marca", m.nombre,
                         "unidad_medida_id", fp.unidad_medida_id,
-                        "unidad_mediad", um.nombre,
+                        "unidad_medida", um.nombre,
                         "unidad_medida_abreviatura", um.abreviatura,
                         "tipo", fp.tipo_producto,
                         "maneja_inventario", fp.maneja_inventario,
@@ -2752,7 +2752,13 @@ BEGIN
                                     "fecha_fin_oferta", price.fecha_fin_oferta,
                                     "activo", price.activo,
                                     "created_at", price.created_at,
-                                    "updated_at", price.updated_at
+                                    "updated_at", price.updated_at,
+                                    "utilidad_absoluta", IF(price.precio_venta IS NOT NULL AND price.precio_compra IS NOT NULL, 
+                                                ROUND(price.precio_venta - price.precio_compra, 2), NULL),
+                        "margen_sobre_costo", IF(price.precio_compra IS NOT NULL AND price.precio_compra != 0,
+                                                ROUND((price.precio_venta - price.precio_compra) / price.precio_compra * 100, 2), NULL),
+                        "margen_sobre_venta", IF(price.precio_venta IS NOT NULL AND price.precio_venta != 0,
+                                                ROUND((price.precio_venta - price.precio_compra) / price.precio_venta * 100, 2), NULL)
                                 )
                             ), JSON_ARRAY())
                             FROM precios price
@@ -5120,4 +5126,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-02 15:11:16
+-- Dump completed on 2026-04-02 22:06:35

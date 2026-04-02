@@ -7,30 +7,6 @@ require './src/utils/curl.php';
 $currentPage = $_SERVER['PHP_SELF'] ?? basename(__FILE__);
 // Si ya está logueado, redirigir al dashboard
 
-
-// if (ini_get("session.use_cookies")) {
-//     $params = session_get_cookie_params();
-//     setcookie(
-//         session_name(),
-//         '',
-//         time() - 42000,
-//         $params["path"],
-//         $params["domain"],
-//         $params["secure"],
-//         $params["httponly"]
-//     );
-// }
-
-// Destruir toda la sesión actual
-// session_unset();     // Libera todas las variables de sesión
-// session_destroy();   // Destruye la sesión (elimina el archivo de sesión)
-
-// Opcional: regenerar el ID de sesión para mayor seguridad
-// if(session_status() !== PHP_SESSION_ACTIVE) {
-//     session_start();
-// }
-
-// session_regenerate_id(true);
 ?>
 <!DOCTYPE html>
 <html lang="es">

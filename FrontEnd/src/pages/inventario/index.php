@@ -70,7 +70,6 @@ $currentPage = $_SERVER['PHP_SELF'] ?? basename(__FILE__);
       <div class="container-fluid">
         <div class="row">
 
-          <!-- Estadísticas -->
           <section class="filtros-section  " aria-label="Filtros del productos">
 
             <div id="filtros-container" class="filtros-container">

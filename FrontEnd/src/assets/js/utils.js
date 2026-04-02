@@ -786,4 +786,138 @@ class Utils {
       }
     });
   }
+
+  static async ensureSwal() {
+    if (window.Swal) return;
+    try {
+      await loadScript("https://cdn.jsdelivr.net/npm/sweetalert2@11");
+      console.info("SweetAlert2 cargado dinámicamente");
+      // after loading define custom styles for step indicators, scoped to our custom popup
+      const style = document.createElement("style");
+      style.textContent = `
+        /* progress bar container should distribute full width */
+        .swal2-progress-steps { display: flex; flex-wrap: nowrap; padding-top: 1.5rem; }
+        .swal2-progress-step {
+          flex: 1 1 0;
+          position: relative;
+          display: flex !important;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 0.75rem 0.5rem;
+          margin: 0 0.125rem;
+          border-radius: var(--radius-sm,0.375rem);
+          background: var(--gray-50, #f8f9fa);
+          color: var(--gray-900, #212529);
+          min-width: 6rem;
+        }
+        .swal2-progress-step-number {
+          position: absolute;
+          top: -1.25rem;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 2rem;
+          height: 2rem;
+          line-height: 2rem;
+          border-radius: 50%;
+          background: var(--gray-200, #eeeeee);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1em;
+        }
+        .swal2-progress-step-label,
+        .swal2-progress-step p {
+          white-space: normal;
+          text-align: center;
+          font-size: 0.9em;
+          margin: 0;
+          padding-top: 0.5rem;
+        }
+        /* state colors */
+        .swal2-progress-step.step-done { background: var(--success-100, #e8f5e9); color: var(--success-700, #388e3c); }
+        .swal2-progress-step.step-upcoming { background: #fff; color: var(--gray-700, #616161); }
+        .swal2-progress-step.swal2-progress-step-active { background: var(--primary-500, #2196f3); color: #fff; }
+        .swal2-progress-step.swal2-progress-step-active .swal2-progress-step-number {
+          background: #fff;
+          color: var(--primary-500, #2196f3);
+          font-weight: bold;
+        }
+        /* ensure modal content wraps nicely */
+        .swal2-html-container { white-space: normal; word-wrap: break-word; }
+        /* stepper styles scoped to our custom popup */
+        .my-swal .stepper {
+          display: flex !important;
+          flex-wrap: nowrap !important;
+          justify-content: space-between !important;
+          margin-bottom: 1rem !important;
+        }
+        .my-swal .stepper-step {
+          flex: 1 1 auto !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          text-align: center !important;
+          padding: 0.5rem !important;
+          border-radius: 0.25rem !important;
+          background: #f8f9fa !important;
+          margin: 0 0.25rem !important;
+        }
+        .my-swal .stepper-step.active { background: #007bff !important; color: white !important; }
+        .my-swal .stepper-step.completed { background: #28a745 !important; color: white !important; }
+        .my-swal .stepper-indicator {
+          width: 2rem !important;
+          height: 2rem !important;
+          border-radius: 50% !important;
+          background: #ddd !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          margin: 0 auto 0.5rem !important;
+          font-weight: bold !important;
+          color: #333 !important;
+        }
+        .my-swal .stepper-step.active .stepper-indicator { background: #007bff !important; color: white !important; }
+        .my-swal .stepper-step.completed .stepper-indicator { background: #28a745 !important; color: white !important; }
+        .my-swal .stepper-label { font-size: 0.9em !important; }
+        .my-swal .step-panel { display: none !important; }
+        .my-swal .step-panel.active { display: block !important; }
+        .my-swal .stepper-controls { display: flex !important; gap: 0.5rem !important; }
+        /* ensure Swal container and popup sit above header */
+        .swal2-container { z-index: 2147483647 !important; }
+        .swal2-popup { z-index: 2147483647 !important; }
+      `;
+      document.head.appendChild(style);
+    } catch (e) {
+      console.warn("No se pudo cargar SweetAlert2 dinámicamente:", e);
+    }
+    // estilos compactos para botones de acción en la tabla
+    (function () {
+      const s = document.createElement("style");
+      s.textContent = `
+      /* override bootstrap's nowrap on btn-group and force wrap even when td has inline nowrap */
+      .paciente-actions { display:flex !important; flex-wrap:wrap !important; gap:0.25rem; justify-content:center; white-space:normal !important; }
+      .paciente-actions .btn { padding: .18rem .32rem; min-width: auto; flex:0 0 48%; white-space:normal; }
+      .paciente-actions .btn .material-icons { font-size: 16px; line-height: 1; }
+      /* avoid extra left margin since flex-wrap handles spacing */
+      .paciente-actions .btn + .btn { margin-left: 0; }
+
+      /* floating container for control buttons */
+      .footer-btn-container {
+        position: fixed !important;
+        bottom: 1rem !important;
+        right: 1rem !important;
+        z-index: 15000 !important;
+        display: flex !important;
+        gap: .5rem !important;
+      }
+      /* controls placed inside the filters area, aligned to the right */
+      .filters-controls { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.5rem; margin-bottom: .5rem; }
+      .filters-controls .btn { padding: .25rem .5rem; }
+
+
+    `;
+      document.head.appendChild(s);
+    })();
+  }
 }

@@ -1,10 +1,10 @@
 CREATE DATABASE  IF NOT EXISTS `ven_pos` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `ven_pos`;
--- MySQL dump 10.13  Distrib 8.0.44, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.45, for Win64 (x86_64)
 --
 -- Host: localhost    Database: ven_pos
 -- ------------------------------------------------------
--- Server version	8.0.45
+-- Server version	8.0.44
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -32,7 +32,7 @@ CREATE TABLE `productos` (
   `categoria_id` int DEFAULT NULL,
   `marca_id` int DEFAULT NULL,
   `unidad_medida_id` int DEFAULT NULL,
-  `tipo_producto` enum('simple','compuesto') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'simple',
+  `tipo_producto` enum('simple','compuesto') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'simple',
   `stock_minimo` decimal(12,2) DEFAULT '0.00' COMMENT 'Stock mínimo global (puede sobrescribirse por empresa en inventario)',
   `maneja_inventario` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1 = afecta inventario, 0 = no afecta inventario',
   `activo` tinyint(1) DEFAULT '1',
@@ -99,4 +99,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-02 15:11:15
+-- Dump completed on 2026-04-02 22:06:31

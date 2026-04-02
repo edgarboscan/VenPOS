@@ -5,6 +5,7 @@
 		}
 	],
 	"settings": {
-		"php.suggest.basic": false
+		"php.suggest.basic": false,
+		"postman.settings.dotenv-detection-notification-visibility": false
 	}
 }

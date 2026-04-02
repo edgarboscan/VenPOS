@@ -73,7 +73,7 @@ $user = getCurrentUser();
             <div id="header-container" class="header-container">
               <div class="wrapper d-flex justify-content-between align-items-center">
                 <div class="header-control one">
-                  <h1 class="header-title">Productos</h1>
+                  <h1 class="header-title">Ficha Producto</h1>
                 </div>
 
                 <div class="header-control two">
@@ -220,45 +220,103 @@ $user = getCurrentUser();
                 </div>
 
 
-                <div class="col-12 col-md-4">
-                  <div class="mb-2">
-                    <div class="checkbox-wrapper-46">
-                      <input id="chkActivo" type="checkbox" id="cbx-46" class="inp-cbx" />
-                      <label for="cbx-46" class="cbx"><span>
-                          <svg viewBox="0 0 12 10" height="10px" width="12px">
-                            <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
-                          </svg></span><span>Activo</span>
-                      </label>
-                    </div>
-                    <div id="chkInventario" class="checkbox-wrapper-46">
-                      <input type="checkbox" id="cbx-46" class="inp-cbx" />
-                      <label for="cbx-46" class="cbx"><span>
-                          <svg viewBox="0 0 12 10" height="10px" width="12px">
-                            <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
-                          </svg></span><span>Maneja Inventario</span>
-                      </label>
-                    </div>
-                  </div>
+                <div class="col-12 col-md-2">
+                  <div class="parent-container">
 
+                    <div class="checkbox-container align-content-start">
+                      <div class="checkbox-wrapper">
+                        <input class="checkbox" id="checkboxActivo" type="checkbox" />
+                        <label class="checkbox-label" for="checkboxActivo">
+                          <div class="checkbox-flip">
+                            <div class="checkbox-front">
+                              <svg
+                                fill="white"
+                                height="16"
+                                width="16"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                  d="M18 6L12 12L18 18L17 19L11 13L5 19L4 18L10 12L4 6L5 5L11 11L17 5L18 6Z"
+                                  class="icon-path" />
+                              </svg>
+                            </div>
+                            <div class="checkbox-back">
+                              <svg
+                                fill="white"
+                                height="16"
+                                width="16"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                  d="M9 19l-7-7 1.41-1.41L9 16.17l11.29-11.3L22 6l-13 13z"
+                                  class="icon-path"></path>
+                              </svg>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    <h5 id="lblActivo">Activo</h5>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                  <div class="parent-container">
+
+                    <div class="checkbox-container align-content-start">
+                      <div class="checkbox-wrapper">
+                        <input class="checkbox" id="checkboxInventario" type="checkbox" />
+                        <label class="checkbox-label" for="checkboxInventario">
+                          <div class="checkbox-flip">
+                            <div class="checkbox-front">
+                              <svg
+                                fill="white"
+                                height="16"
+                                width="16"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                  d="M18 6L12 12L18 18L17 19L11 13L5 19L4 18L10 12L4 6L5 5L11 11L17 5L18 6Z"
+                                  class="icon-path" />
+                              </svg>
+                            </div>
+                            <div class="checkbox-back">
+                              <svg
+                                fill="white"
+                                height="16"
+                                width="16"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                  d="M9 19l-7-7 1.41-1.41L9 16.17l11.29-11.3L22 6l-13 13z"
+                                  class="icon-path"></path>
+                              </svg>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    <h5 id="lblInventario">Maneja Inventario</h5>
+                  </div>
                 </div>
 
                 <div class="align-items-end align-self-end d-flex" style="gap:.5rem;">
                   <button
                     type="button"
-                    id="btn_apply_filters"
+                    id="btn_grabar"
                     class="btn btn-outline-info"
-                    title="Aplicar filtros">
+                    title="Grabar producto">
                     <div class="parent-container">
-                      <span class="material-symbols-outlined">filter_alt</span> Filtrar
+                      <span class="material-symbols-outlined">save</span>&nbsp;Grabar 
                     </div>
                   </button>
                   <button
                     type="button"
-                    id="btn_clear_filters"
+                    id="btn_cancelar"
                     class="btn btn-danger"
-                    title="Limpiar filtros">
+                    title="Cancelar edición">
                     <div class="parent-container">
-                      <span class="material-symbols-outlined">filter_alt_off</span> Limpiar
+                      <span class="material-symbols-outlined">close</span>&nbsp;Cancelar
                     </div>
                   </button>
                 </div>
@@ -268,7 +326,7 @@ $user = getCurrentUser();
 
           <section class="card-section mt-4" aria-label="Tabla de codigos y precios">
             <div class="card-container">
-              <div class="card one">
+              <div class="card">
                 <div class="card-header">
                   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                     <h5 class="mb-0">Codigos</h5>
@@ -291,23 +349,12 @@ $user = getCurrentUser();
                             <th class="align-middle">Acciones</th>
                           </tr>
                         </thead>
-                        <tfoot>
-                          <tr>
-                            <td colspan="11">
-                              <div id="paging">
-                                <nav id="codigos" class="table table-striped table-hover" style="width:100%-pagination" aria-label="Paginación codigos" class="table table-striped table-hover" style="width:100%">
-                                  <ul class="pagination justify-content-center">
-                                    <!-- elementos de paginación generados dinámicamente -->
-                                  </ul>
-                                </nav>
-                              </div>
-                          </tr>
-                        </tfoot>
+
                         <tbody>
 
                         </tbody>
                       </table>
-                      <div class="skeleton-content">
+                      <div id="skCodigos" class="skeleton-content">
                         <div class="skeleton skeleton-text" style="height: 3.5rem; width: 90%; margin: 0 auto 0.5rem; align-content: middle; ">
                           <div class="text-primary  text-center " style="font-weight: bold; font-size: 2.25rem;clear: both; height: 100%; display: flex; align-items: center; justify-content: center;">Cargando...</div>
                         </div>
@@ -319,7 +366,7 @@ $user = getCurrentUser();
                 </div>
               </div>
 
-              <div class="card two">
+              <div class="card">
                 <div class="card-header">
                   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                     <h5 class="mb-0">Precios</h5>
@@ -337,29 +384,23 @@ $user = getCurrentUser();
                       <table id="tabla_precios" class="table table-striped table-hover" style="width:100%">
                         <thead>
                           <tr>
-                            <th class="align-middle">Tipo</th>
-                            <th class="align-middle">Codigo</th>
+                            <th class="align-middle">Costo</th>
+                            <th class="align-middle">% Utilidad</th>
+                            <th class="align-middle">Precio</th>
+                            <th class="align-middle">Oferta</th>
+                            <th class="align-middle">Oferta Validad</th>
+
+                            <th class="align-middle">Incidencia en Ventas</th>
                             <th class="align-middle">Estado</th>
+
                             <th class="align-middle">Acciones</th>
                           </tr>
                         </thead>
-                        <tfoot>
-                          <tr>
-                            <td colspan="11">
-                              <div id="paging">
-                                <nav id="precios" class="table table-striped table-hover" style="width:100%-pagination" aria-label="Paginación precios" class="table table-striped table-hover" style="width:100%">
-                                  <ul class="pagination justify-content-center">
-                                    <!-- elementos de paginación generados dinámicamente -->
-                                  </ul>
-                                </nav>
-                              </div>
-                          </tr>
-                        </tfoot>
                         <tbody>
 
                         </tbody>
                       </table>
-                      <div class="skeleton-content">
+                      <div id="skPrecios" class="skeleton-content">
                         <div class="skeleton skeleton-text" style="height: 3.5rem; width: 90%; margin: 0 auto 0.5rem; align-content: middle; ">
                           <div class="text-primary  text-center " style="font-weight: bold; font-size: 2.25rem;clear: both; height: 100%; display: flex; align-items: center; justify-content: center;">Cargando...</div>
                         </div>
