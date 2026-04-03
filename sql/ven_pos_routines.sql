@@ -1,10 +1,10 @@
 CREATE DATABASE  IF NOT EXISTS `ven_pos` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `ven_pos`;
--- MySQL dump 10.13  Distrib 8.0.45, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.44, for Win64 (x86_64)
 --
 -- Host: localhost    Database: ven_pos
 -- ------------------------------------------------------
--- Server version	8.0.44
+-- Server version	8.0.45
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -653,6 +653,61 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_categoria_existe` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_categoria_existe`(
+    IN p_id INT,
+    IN p_nombre VARCHAR(100)
+)
+    COMMENT 'Verifica si una categoría existe por id o nombre'
+BEGIN
+    DECLARE v_existe INT DEFAULT 0;
+    DECLARE v_data JSON DEFAULT NULL;
+    DECLARE v_error_message VARCHAR(255);
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1 v_error_message = MESSAGE_TEXT;
+        SELECT JSON_OBJECT('status', 'error', 'codigo', '500', 'message', v_error_message) AS result;
+    END;
+    
+    IF (p_id IS NULL OR p_id <= 0) AND (p_nombre IS NULL OR p_nombre = '') THEN
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Debe proporcionar id o nombre') AS result;
+    ELSE
+        IF p_id IS NOT NULL AND p_id > 0 THEN
+            SELECT COUNT(*) INTO v_existe FROM categorias WHERE id = p_id;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'nombre', nombre, 'descripcion', descripcion, 'activo', activo)
+                INTO v_data FROM categorias WHERE id = p_id;
+            END IF;
+        ELSE
+            SELECT COUNT(*) INTO v_existe FROM categorias WHERE nombre = p_nombre;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'nombre', nombre, 'descripcion', descripcion, 'activo', activo)
+                INTO v_data FROM categorias WHERE nombre = p_nombre;
+            END IF;
+        END IF;
+        
+        IF v_existe = 0 THEN
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Categoría ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('"', p_nombre, '"')), ' no existe'), 'exists', FALSE, 'data', NULL) AS result;
+        ELSE
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Categoría ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('"', p_nombre, '"')), ' ya existe'), 'exists', TRUE, 'data', v_data) AS result;
+        END IF;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `sp_categoria_obtener_json` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -1229,6 +1284,61 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_codigo_producto_existe` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_codigo_producto_existe`(
+    IN p_id INT,
+    IN p_codigo VARCHAR(100)
+)
+    COMMENT 'Verifica si un código de producto existe por id o código'
+BEGIN
+    DECLARE v_existe INT DEFAULT 0;
+    DECLARE v_data JSON DEFAULT NULL;
+    DECLARE v_error_message VARCHAR(255);
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1 v_error_message = MESSAGE_TEXT;
+        SELECT JSON_OBJECT('status', 'error', 'codigo', '500', 'message', v_error_message) AS result;
+    END;
+    
+    IF (p_id IS NULL OR p_id <= 0) AND (p_codigo IS NULL OR p_codigo = '') THEN
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Debe proporcionar id o código') AS result;
+    ELSE
+        IF p_id IS NOT NULL AND p_id > 0 THEN
+            SELECT COUNT(*) INTO v_existe FROM codigos_productos WHERE id = p_id;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'producto_id', producto_id, 'tipo_codigo', tipo_codigo, 'codigo', codigo, 'activo', activo)
+                INTO v_data FROM codigos_productos WHERE id = p_id;
+            END IF;
+        ELSE
+            SELECT COUNT(*) INTO v_existe FROM codigos_productos WHERE codigo = p_codigo;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'producto_id', producto_id, 'tipo_codigo', tipo_codigo, 'codigo', codigo, 'activo', activo)
+                INTO v_data FROM codigos_productos WHERE codigo = p_codigo;
+            END IF;
+        END IF;
+        
+        IF v_existe = 0 THEN
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Código ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('"', p_codigo, '"')), ' no existe'), 'exists', FALSE, 'data', NULL) AS result;
+        ELSE
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Código ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('"', p_codigo, '"')), ' ya existe'), 'exists', TRUE, 'data', v_data) AS result;
+        END IF;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `sp_codigo_producto_obtener_json` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -1484,6 +1594,61 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_empresa_existe` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_empresa_existe`(
+    IN p_id INT,
+    IN p_ruc VARCHAR(20)
+)
+    COMMENT 'Verifica si una empresa existe por id o ruc'
+BEGIN
+    DECLARE v_existe INT DEFAULT 0;
+    DECLARE v_data JSON DEFAULT NULL;
+    DECLARE v_error_message VARCHAR(255);
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1 v_error_message = MESSAGE_TEXT;
+        SELECT JSON_OBJECT('status', 'error', 'codigo', '500', 'message', v_error_message) AS result;
+    END;
+    
+    IF (p_id IS NULL OR p_id <= 0) AND (p_ruc IS NULL OR p_ruc = '') THEN
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Debe proporcionar id o ruc') AS result;
+    ELSE
+        IF p_id IS NOT NULL AND p_id > 0 THEN
+            SELECT COUNT(*) INTO v_existe FROM empresas WHERE id = p_id;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'nombre', nombre, 'ruc', ruc, 'direccion', direccion, 'telefono', telefono, 'email', email, 'logo', logo, 'activo', activo)
+                INTO v_data FROM empresas WHERE id = p_id;
+            END IF;
+        ELSE
+            SELECT COUNT(*) INTO v_existe FROM empresas WHERE ruc = p_ruc;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'nombre', nombre, 'ruc', ruc, 'direccion', direccion, 'telefono', telefono, 'email', email, 'logo', logo, 'activo', activo)
+                INTO v_data FROM empresas WHERE ruc = p_ruc;
+            END IF;
+        END IF;
+        
+        IF v_existe = 0 THEN
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Empresa ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('con ruc ', p_ruc)), ' no existe'), 'exists', FALSE, 'data', NULL) AS result;
+        ELSE
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Empresa ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('con ruc ', p_ruc)), ' ya existe'), 'exists', TRUE, 'data', v_data) AS result;
+        END IF;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `sp_empresa_obtener_json` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -1701,6 +1866,61 @@ BEGIN
         DELETE FROM formas_pago WHERE id = p_id;
         COMMIT;
         SELECT JSON_OBJECT('status', 'success', 'message', 'Forma de pago eliminada') AS result;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_forma_pago_existe` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_forma_pago_existe`(
+    IN p_id INT,
+    IN p_nombre VARCHAR(50)
+)
+    COMMENT 'Verifica si una forma de pago existe por id o nombre'
+BEGIN
+    DECLARE v_existe INT DEFAULT 0;
+    DECLARE v_data JSON DEFAULT NULL;
+    DECLARE v_error_message VARCHAR(255);
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1 v_error_message = MESSAGE_TEXT;
+        SELECT JSON_OBJECT('status', 'error', 'codigo', '500', 'message', v_error_message) AS result;
+    END;
+    
+    IF (p_id IS NULL OR p_id <= 0) AND (p_nombre IS NULL OR p_nombre = '') THEN
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Debe proporcionar id o nombre') AS result;
+    ELSE
+        IF p_id IS NOT NULL AND p_id > 0 THEN
+            SELECT COUNT(*) INTO v_existe FROM formas_pago WHERE id = p_id;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'nombre', nombre, 'activo', activo)
+                INTO v_data FROM formas_pago WHERE id = p_id;
+            END IF;
+        ELSE
+            SELECT COUNT(*) INTO v_existe FROM formas_pago WHERE nombre = p_nombre;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'nombre', nombre, 'activo', activo)
+                INTO v_data FROM formas_pago WHERE nombre = p_nombre;
+            END IF;
+        END IF;
+        
+        IF v_existe = 0 THEN
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Forma de pago ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('"', p_nombre, '"')), ' no existe'), 'exists', FALSE, 'data', NULL) AS result;
+        ELSE
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Forma de pago ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('"', p_nombre, '"')), ' ya existe'), 'exists', TRUE, 'data', v_data) AS result;
+        END IF;
     END IF;
 END ;;
 DELIMITER ;
@@ -2313,6 +2533,61 @@ BEGIN
         DELETE FROM marcas WHERE id = p_id;
         COMMIT;
         SELECT JSON_OBJECT('status', 'success', 'message', 'Marca eliminada') AS result;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_marca_existe` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_marca_existe`(
+    IN p_id INT,
+    IN p_nombre VARCHAR(100)
+)
+    COMMENT 'Verifica si una marca existe por id o nombre'
+BEGIN
+    DECLARE v_existe INT DEFAULT 0;
+    DECLARE v_data JSON DEFAULT NULL;
+    DECLARE v_error_message VARCHAR(255);
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1 v_error_message = MESSAGE_TEXT;
+        SELECT JSON_OBJECT('status', 'error', 'codigo', '500', 'message', v_error_message) AS result;
+    END;
+    
+    IF (p_id IS NULL OR p_id <= 0) AND (p_nombre IS NULL OR p_nombre = '') THEN
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Debe proporcionar id o nombre') AS result;
+    ELSE
+        IF p_id IS NOT NULL AND p_id > 0 THEN
+            SELECT COUNT(*) INTO v_existe FROM marcas WHERE id = p_id;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'nombre', nombre, 'activo', activo)
+                INTO v_data FROM marcas WHERE id = p_id;
+            END IF;
+        ELSE
+            SELECT COUNT(*) INTO v_existe FROM marcas WHERE nombre = p_nombre;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'nombre', nombre, 'activo', activo)
+                INTO v_data FROM marcas WHERE nombre = p_nombre;
+            END IF;
+        END IF;
+        
+        IF v_existe = 0 THEN
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Marca ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('"', p_nombre, '"')), ' no existe'), 'exists', FALSE, 'data', NULL) AS result;
+        ELSE
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Marca ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('"', p_nombre, '"')), ' ya existe'), 'exists', TRUE, 'data', v_data) AS result;
+        END IF;
     END IF;
 END ;;
 DELIMITER ;
@@ -3145,6 +3420,102 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_producto_existe` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_producto_existe`(
+    IN p_id INT,
+    IN p_codigo VARCHAR(50)
+)
+    COMMENT 'Verifica si un producto existe por su id o codigo. Devuelve JSON con estado y datos.'
+BEGIN
+    DECLARE v_existe INT DEFAULT 0;
+    DECLARE v_data JSON DEFAULT NULL;
+    DECLARE v_error_message VARCHAR(255);
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1 v_error_message = MESSAGE_TEXT;
+        SELECT JSON_OBJECT(
+            'status', 'error',
+            'codigo', '500',
+            'message', v_error_message
+        ) AS result;
+    END;
+    
+    -- Validar que al menos un parámetro sea válido
+    IF (p_id IS NULL OR p_id <= 0) AND (p_codigo IS NULL OR p_codigo = '') THEN
+        SELECT JSON_OBJECT(
+            'status', 'error',
+            'message', 'Debe proporcionar al menos un id válido o un código para buscar'
+        ) AS result;
+    ELSE
+        -- Buscar por ID si se proporciona y es válido
+        IF p_id IS NOT NULL AND p_id > 0 THEN
+            SELECT COUNT(*) INTO v_existe FROM productos WHERE id = p_id;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT(
+                    'id', id,
+                    'codigo_principal', codigo_principal,
+                    'nombre', nombre,
+                    'descripcion', descripcion,
+                    'activo', activo
+                ) INTO v_data
+                FROM productos WHERE id = p_id;
+            END IF;
+        ELSE
+            -- Buscar por código exacto (mejor que LIKE para existencia)
+            SELECT COUNT(*) INTO v_existe FROM productos WHERE codigo_principal = p_codigo;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT(
+                    'id', id,
+                    'codigo_principal', codigo_principal,
+                    'nombre', nombre,
+                    'descripcion', descripcion,
+                    'activo', activo
+                ) INTO v_data
+                FROM productos WHERE codigo_principal = p_codigo;
+            END IF;
+        END IF;
+        
+        -- Preparar respuesta
+        IF v_existe = 0 THEN
+            SELECT JSON_OBJECT(
+                'status', 'success',
+                'message', CONCAT(
+                    'Producto ',
+                    IF(p_id IS NOT NULL AND p_id > 0, CONCAT('con id ', p_id), CONCAT('con código ', p_codigo)),
+                    ' no existe. Disponible'
+                ),
+                'exists', FALSE,
+                'data', NULL
+            ) AS result;
+        ELSE
+            SELECT JSON_OBJECT(
+                'status', 'success',
+                'message', CONCAT(
+                    'Producto ',
+                    IF(p_id IS NOT NULL AND p_id > 0, CONCAT('con id ', p_id), CONCAT('con código ', p_codigo)),
+                    ' ya existe'
+                ),
+                'exists', TRUE,
+                'data', v_data
+            ) AS result;
+        END IF;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `sp_producto_obtener_json` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -3170,7 +3541,14 @@ BEGIN
         'stock_minimo', p.stock_minimo,
         'maneja_inventario', p.maneja_inventario,
         'activo', p.activo,
-        'componentes', (
+        'utilidad_absoluta', IF(pr.precio_venta IS NOT NULL AND pr.precio_compra IS NOT NULL, 
+			ROUND(pr.precio_venta - pr.precio_compra, 2), NULL),
+         'margen_sobre_costo', IF(pr.precio_compra IS NOT NULL AND pr.precio_compra != 0,
+			ROUND((pr.precio_venta - pr.precio_compra) / pr.precio_compra * 100, 2), NULL),
+         'margen_sobre_venta', IF(pr.precio_venta IS NOT NULL AND pr.precio_venta != 0,
+			ROUND((pr.precio_venta - pr.precio_compra) / pr.precio_venta * 100, 2), NULL),
+         'stock', IF(p.tipo_producto = "compuesto" OR p.maneja_inventario = 0, NULL, i.stock_actual),
+         'componentes', (
             SELECT IFNULL(JSON_ARRAYAGG(
                 JSON_OBJECT(
                     'id', pc.id,
@@ -3183,7 +3561,7 @@ BEGIN
             INNER JOIN productos p2 ON pc.producto_componente_id = p2.id
             WHERE pc.producto_compuesto_id = p.id
         ),
-        "precios", (
+         'precios', (
 			SELECT IFNULL(JSON_ARRAYAGG(
 				JSON_OBJECT(
                                     "id", price.id,
@@ -3194,13 +3572,19 @@ BEGIN
                                     "fecha_fin_oferta", price.fecha_fin_oferta,
                                     "activo", price.activo,
                                     "created_at", price.created_at,
-                                    "updated_at", price.updated_at
+                                    "updated_at", price.updated_at,
+                                    "utilidad_absoluta", IF(price.precio_venta IS NOT NULL AND price.precio_compra IS NOT NULL, 
+                                                ROUND(price.precio_venta - price.precio_compra, 2), NULL),
+                        "margen_sobre_costo", IF(price.precio_compra IS NOT NULL AND price.precio_compra != 0,
+                                                ROUND((price.precio_venta - price.precio_compra) / price.precio_compra * 100, 2), NULL),
+                        "margen_sobre_venta", IF(price.precio_venta IS NOT NULL AND price.precio_venta != 0,
+                                                ROUND((price.precio_venta - price.precio_compra) / price.precio_venta * 100, 2), NULL)
                                 )
 			), JSON_ARRAY())
 			FROM precios price
 			WHERE price.producto_id = p.id AND price.empresa_id = @app_empresa_id
          ),
-         "codigos", (
+		 'codigos', (
 			SELECT IFNULL(JSON_ARRAYAGG(
 				JSON_OBJECT(
             "id", code.id,
@@ -3213,7 +3597,9 @@ BEGIN
            WHERE code.producto_id = p.id
                         )
     ) INTO v_result
-    FROM productos p
+    FROM productos p 
+    LEFT JOIN precios pr ON p.id = pr.producto_id AND pr.empresa_id = @app_empresa_id AND pr.activo = 1
+    LEFT JOIN inventario i ON p.id = i.producto_id AND i.empresa_id = @app_empresa_id 
     WHERE p.id = p_id;
     
     IF v_result IS NULL THEN
@@ -3537,6 +3923,61 @@ BEGIN
         DELETE FROM proveedores WHERE id = p_id;
         COMMIT;
         SELECT JSON_OBJECT('status', 'success', 'message', 'Proveedor eliminado') AS result;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_proveedor_existe` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_proveedor_existe`(
+    IN p_id INT,
+    IN p_ruc VARCHAR(20)
+)
+    COMMENT 'Verifica si un proveedor existe por id o ruc'
+BEGIN
+    DECLARE v_existe INT DEFAULT 0;
+    DECLARE v_data JSON DEFAULT NULL;
+    DECLARE v_error_message VARCHAR(255);
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1 v_error_message = MESSAGE_TEXT;
+        SELECT JSON_OBJECT('status', 'error', 'codigo', '500', 'message', v_error_message) AS result;
+    END;
+    
+    IF (p_id IS NULL OR p_id <= 0) AND (p_ruc IS NULL OR p_ruc = '') THEN
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Debe proporcionar id o ruc') AS result;
+    ELSE
+        IF p_id IS NOT NULL AND p_id > 0 THEN
+            SELECT COUNT(*) INTO v_existe FROM proveedores WHERE id = p_id;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'empresa_id', empresa_id, 'ruc', ruc, 'nombre', nombre, 'direccion', direccion, 'telefono', telefono, 'email', email, 'contacto_nombre', contacto_nombre, 'activo', activo)
+                INTO v_data FROM proveedores WHERE id = p_id;
+            END IF;
+        ELSE
+            SELECT COUNT(*) INTO v_existe FROM proveedores WHERE ruc = p_ruc;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'empresa_id', empresa_id, 'ruc', ruc, 'nombre', nombre, 'direccion', direccion, 'telefono', telefono, 'email', email, 'contacto_nombre', contacto_nombre, 'activo', activo)
+                INTO v_data FROM proveedores WHERE ruc = p_ruc;
+            END IF;
+        END IF;
+        
+        IF v_existe = 0 THEN
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Proveedor ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('con ruc ', p_ruc)), ' no existe'), 'exists', FALSE, 'data', NULL) AS result;
+        ELSE
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Proveedor ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('con ruc ', p_ruc)), ' ya existe'), 'exists', TRUE, 'data', v_data) AS result;
+        END IF;
     END IF;
 END ;;
 DELIMITER ;
@@ -4660,6 +5101,61 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_unidad_medida_existe` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_unidad_medida_existe`(
+    IN p_id INT,
+    IN p_nombre VARCHAR(50)
+)
+    COMMENT 'Verifica si una unidad de medida existe por id o nombre'
+BEGIN
+    DECLARE v_existe INT DEFAULT 0;
+    DECLARE v_data JSON DEFAULT NULL;
+    DECLARE v_error_message VARCHAR(255);
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1 v_error_message = MESSAGE_TEXT;
+        SELECT JSON_OBJECT('status', 'error', 'codigo', '500', 'message', v_error_message) AS result;
+    END;
+    
+    IF (p_id IS NULL OR p_id <= 0) AND (p_nombre IS NULL OR p_nombre = '') THEN
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Debe proporcionar id o nombre') AS result;
+    ELSE
+        IF p_id IS NOT NULL AND p_id > 0 THEN
+            SELECT COUNT(*) INTO v_existe FROM unidades_medida WHERE id = p_id;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'nombre', nombre, 'abreviatura', abreviatura, 'activo', activo)
+                INTO v_data FROM unidades_medida WHERE id = p_id;
+            END IF;
+        ELSE
+            SELECT COUNT(*) INTO v_existe FROM unidades_medida WHERE nombre = p_nombre;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'nombre', nombre, 'abreviatura', abreviatura, 'activo', activo)
+                INTO v_data FROM unidades_medida WHERE nombre = p_nombre;
+            END IF;
+        END IF;
+        
+        IF v_existe = 0 THEN
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Unidad de medida ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('"', p_nombre, '"')), ' no existe'), 'exists', FALSE, 'data', NULL) AS result;
+        ELSE
+            SELECT JSON_OBJECT('status', 'success', 'message', CONCAT('Unidad de medida ', IF(p_id>0, CONCAT('con id ', p_id), CONCAT('"', p_nombre, '"')), ' ya existe'), 'exists', TRUE, 'data', v_data) AS result;
+        END IF;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `sp_unidad_medida_obtener_json` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -4906,6 +5402,68 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_usuario_existe` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_usuario_existe`(
+    IN p_id INT,
+    IN p_cedula VARCHAR(13),
+    IN p_email VARCHAR(100)
+)
+    COMMENT 'Verifica si un usuario existe por id, cédula o email'
+BEGIN
+    DECLARE v_existe INT DEFAULT 0;
+    DECLARE v_data JSON DEFAULT NULL;
+    DECLARE v_error_message VARCHAR(255);
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        GET DIAGNOSTICS CONDITION 1 v_error_message = MESSAGE_TEXT;
+        SELECT JSON_OBJECT('status', 'error', 'codigo', '500', 'message', v_error_message) AS result;
+    END;
+    
+    IF (p_id IS NULL OR p_id <= 0) AND (p_cedula IS NULL OR p_cedula = '') AND (p_email IS NULL OR p_email = '') THEN
+        SELECT JSON_OBJECT('status', 'error', 'message', 'Debe proporcionar id, cédula o email') AS result;
+    ELSE
+        IF p_id IS NOT NULL AND p_id > 0 THEN
+            SELECT COUNT(*) INTO v_existe FROM usuarios WHERE id = p_id;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'cedula', cedula, 'nombre', nombre, 'apellido', apellido, 'telefono', telefono, 'email', email, 'img_url', img_url, 'activo', activo)
+                INTO v_data FROM usuarios WHERE id = p_id;
+            END IF;
+        ELSEIF p_cedula IS NOT NULL AND p_cedula != '' THEN
+            SELECT COUNT(*) INTO v_existe FROM usuarios WHERE cedula = p_cedula;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'cedula', cedula, 'nombre', nombre, 'apellido', apellido, 'telefono', telefono, 'email', email, 'img_url', img_url, 'activo', activo)
+                INTO v_data FROM usuarios WHERE cedula = p_cedula;
+            END IF;
+        ELSEIF p_email IS NOT NULL AND p_email != '' THEN
+            SELECT COUNT(*) INTO v_existe FROM usuarios WHERE email = p_email;
+            IF v_existe > 0 THEN
+                SELECT JSON_OBJECT('id', id, 'cedula', cedula, 'nombre', nombre, 'apellido', apellido, 'telefono', telefono, 'email', email, 'img_url', img_url, 'activo', activo)
+                INTO v_data FROM usuarios WHERE email = p_email;
+            END IF;
+        END IF;
+        
+        IF v_existe = 0 THEN
+            SELECT JSON_OBJECT('status', 'success', 'message', 'Usuario no existe', 'exists', FALSE, 'data', NULL) AS result;
+        ELSE
+            SELECT JSON_OBJECT('status', 'success', 'message', 'Usuario ya existe', 'exists', TRUE, 'data', v_data) AS result;
+        END IF;
+    END IF;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `sp_usuario_obtener_json` */;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
@@ -5126,4 +5684,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-02 22:06:35
+-- Dump completed on 2026-04-03 10:45:25
