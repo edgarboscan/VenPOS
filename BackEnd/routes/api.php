@@ -165,6 +165,11 @@ if (strpos($uri, '/api/inventario') !== false) {
     exit;
   }
 
+  if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/inventario/check-codigo-exists') !== false) {
+    \App\Controllers\InventarioController::chkCodigoExiste();
+    exit;
+  }
+
   if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     \App\Controllers\InventarioController::get_listado();
     exit;

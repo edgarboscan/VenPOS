@@ -50,7 +50,7 @@ $pageName = $nombre = isset($_GET['title']) ? ' - ' . $_GET['title'] : '';
 
   <div class="parent-container">
     <button class="hamburger-btn" id="sidebarToggle"><i class="fas fa-bars"></i></button>
-    <p class="page-title" style="color: var(--light-color);">&nbsp;VenPos<?= $pageName ?></p>
+    <p class="page-title hide-text" style="color: var(--light-color);">&nbsp;VenPos<?= $pageName ?></p>
   </div>
 
 

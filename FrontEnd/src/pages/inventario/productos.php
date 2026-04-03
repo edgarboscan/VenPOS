@@ -84,7 +84,7 @@ $user = getCurrentUser();
                     title="Agregar nuevo producto"
                     style="z-index: 16001;">
                     <div class="parent-container">
-                      <span class="material-symbols-outlined">add</span>&nbsp;Agregar
+                      <span class="material-symbols-outlined">add</span><label class="header-title">&nbsp;Agregar</label>
                     </div>
                   </button>
                   <button
@@ -94,7 +94,7 @@ $user = getCurrentUser();
                     title="Cancelar edición"
                     style="z-index: 16001;">
                     <div class="parent-container">
-                      <span class="material-symbols-outlined">cancel</span>&nbsp;Cancelar
+                      <span class="material-symbols-outlined">cancel</span><label class="header-title">&nbsp;Cancelar</label>
                     </div>
                   </button>
                   <button
@@ -104,7 +104,7 @@ $user = getCurrentUser();
                     title="Regresar a la lista"
                     style="z-index: 16001;">
                     <div class="parent-container">
-                      <span class="material-symbols-outlined">door_back</span>&nbsp;Regresar
+                      <span class="material-symbols-outlined">door_back</span><label class="header-title">&nbsp;Regresar</label>
                     </div>
                   </button>
                 </div>
@@ -226,7 +226,7 @@ $user = getCurrentUser();
                     <div class="checkbox-container align-content-start">
                       <div class="checkbox-wrapper">
                         <input class="checkbox" id="checkboxProductoActivo" type="checkbox" />
-                        <label class="checkbox-label" for="checkboxPro  ductoActivo">
+                        <label class="checkbox-label" for="checkboxProductoActivo">
                           <div class="checkbox-flip">
                             <div class="checkbox-front">
                               <svg
@@ -262,7 +262,6 @@ $user = getCurrentUser();
 
                 <div class="col-12 col-md-4">
                   <div class="parent-container">
-
                     <div class="checkbox-container align-content-start">
                       <div class="checkbox-wrapper">
                         <input class="checkbox" id="checkboxInventario" type="checkbox" />
@@ -367,7 +366,7 @@ $user = getCurrentUser();
               </div>
 
             </div>
-            <div class="card-container">  
+            <div class="card-container">
               <div class="card">
                 <div class="card-header">
                   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">

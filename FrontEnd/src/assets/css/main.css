@@ -483,6 +483,19 @@ body {
   align-items: center;
   gap: 12px;
 }
+
+/* Se oculta en móviles (pantallas de hasta 768px) */
+@media (max-width: 768px) {
+  .page-title {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-title {
+    display: none;
+  }
+}
 .page-title i {
   background: rgba(30, 95, 116, 0.1);
   width: 48px;

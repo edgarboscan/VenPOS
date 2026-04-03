@@ -16,8 +16,7 @@ class ProductosManager {
 
     this.URL_CHK_EXIST_PRODUCTO = this.interBase + "/check-exist";
 
-    this.URL_CHK_EXIST_CODGIO =
-      this.BASE_URL + "/backend/public/index.php/api/codigos/check-exist";
+    this.URL_CHK_EXIST_CODIGO = this.interBase + "/check-codigo-exists";
 
     this.URL_SEARCH_CATEGORIAS =
       this.BASE_URL + "/backend/public/index.php/api/categorias/search";
@@ -59,6 +58,7 @@ class ProductosManager {
 
     this.init();
   }
+
   async init() {
     this.addEventListeners();
 
@@ -316,29 +316,26 @@ class ProductosManager {
       try {
         const params = new URLSearchParams();
         if (codigo) params.set("codigo", codigo);
-        params.set("id", null);
-        const resp = await fetch(interBase + "/obtenerBy" + `?${params}`, {
-          cache: "no-store",
-        });
+        const resp = await fetch(
+          productosManager.URL_CHK_EXIST_CODIGO + `?${params}`,
+          {
+            cache: "no-store",
+          },
+        );
         const data = await resp.json();
         if (data && data.success) {
-          var _resu = [];
-          var resultados = data.resultados || [];
-          var code = resultados.codigo || "";
-          var codCodigo = cedula ? cedula.codigo : "";
-          var existing = codCodigo === 200;
+          var resultados = data.data || [];
 
           var msj = "";
-          if (codCodigo === 200) {
-            msj += ` <strong>Codigo:</strong> <code>${code.data[0].codigo}</code> `;
-            msj += `Insumo: <strong>${code.data[0].nombre || ""}</strong><br />`;
+          if (data.exists) {
+            msj += ` <strong>Codigo:</strong> <code>${resultados.codigo}</code> ya existe en el sistema.<br />`;
+            msj += `Tipo Codigo: <strong>${resultados.tipo_codigo || ""}</strong><br />`;
           }
 
-          if (isNew && existing) {
+          if (isNew && data.exists) {
             return JSON.stringify({
-              success: existing,
+              success: data.exists,
               msj: msj,
-              cedula: code ? code.valor : "",
             });
           }
         }
@@ -439,6 +436,32 @@ class ProductosManager {
       }
     }
 
+    async function validaCodigo(value, objecto) {
+      if (value.trim() === "") {
+        Swal.showValidationMessage("El codigo no puede estar vacio");
+        objecto.focus();
+        setTimeout(() => {
+          console.log("¡Han pasado 3 segundos!");
+          Swal.resetValidationMessage();
+          // Tu código aquí
+        }, 3000);
+        return false;
+      }
+
+      try {
+        const duplicate = JSON.parse(await checkDuplicate(value));
+        if (duplicate.success) {
+          Swal.showValidationMessage("Ya existe un codigo con este valor");
+          objecto.focus();
+          setTimeout(() => {
+            console.log("¡Han pasado 3 segundos!");
+            Swal.resetValidationMessage();
+            // Tu código aquí
+          }, 3000);
+        } 
+      } catch (e) {}
+    }
+
     const modalHTML = `
     <form id="swal-form" novalidate>
       <input type="hidden" name="id"/>
@@ -507,7 +530,6 @@ class ProductosManager {
               <h5 id="lblActivo">Inactivo</h5>
             </div>
           </div>
-
         </div>
     </form>
   
@@ -542,6 +564,44 @@ class ProductosManager {
         const form = popup.querySelector("#swal-form");
         const checkbox = form.querySelector("#checkboxActivo");
         const lblActivo = form.querySelector("#lblActivo");
+        const tTipoCodigo = form.querySelector("#tTipoCodigo");
+        const tCodigo = form.querySelector("#tCodigo");
+
+        // evitar que Enter cierre el modal o dispare el submit accidentalmente
+        try {
+          popup.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter") {
+              const t = ev.target || ev.srcElement;
+              const tag = t && t.tagName ? t.tagName.toUpperCase() : "";
+              // permitir Enter solo en textarea o si el foco está en el botón de guardar
+              if (
+                tag !== "TEXTAREA" &&
+                !(
+                  tag === "BUTTON" &&
+                  (t.id === "swal-btnSave" || t.type === "submit")
+                )
+              ) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                return false;
+              }
+            }
+          });
+        } catch (e) {}
+
+        tCodigo.addEventListener("keydown", async function (ev) {
+          if (ev.key === "Enter") {
+            const value = this.value.trim();
+            ev.preventDefault();
+            await validaCodigo(value, tcodigo);
+          }
+        });
+
+        tCodigo.addEventListener("blur", async function (ev) {
+          const value = this.value.trim();
+          ev.preventDefault();
+          await validaCodigo(value, tcodigo);
+        });
 
         if (!isNew) {
           // cargar datos del codigo en el formulario

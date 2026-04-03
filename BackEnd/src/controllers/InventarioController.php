@@ -106,6 +106,10 @@ class InventarioController
     }
   }
 
+  /**
+   * Método para manejar solicitudes GET a /api/inventario/chkExiste
+   * Verifica si un producto existe en el inventario basado en su ID o código.
+   */
   public static function chkExiste()
   {
     header('Content-Type: application/json; charset=utf-8');
@@ -144,6 +148,52 @@ class InventarioController
     } catch (PDOException $e) {
       http_response_code(500);
       echo json_encode(['success' => false, 'error' => 'db_error', 'message' => 'Error al verificar existencia del producto: ' . $e->getMessage()]);
+    }
+  }
+
+
+  /**
+   * Método para manejar solicitudes GET a /api/inventario/chkCodigoExiste
+   * Verifica si un codigo existe en el inventario basado en su ID o código.
+   */
+  public static function chkCodigoExiste()
+  {
+    header('Content-Type: application/json; charset=utf-8');
+    if (!class_exists(HelperController::class)) {
+      $maybe = __DIR__ . '/HelperController.php';
+      if (file_exists($maybe)) {
+        require_once $maybe;
+      }
+    }
+
+    $maybeDb = __DIR__ . '/../../config/db.php';
+    if (file_exists($maybeDb))
+      require_once $maybeDb;
+
+    $id = $_GET['id'] ?? null;
+    $codigo = $_GET['codigo'] ?? null;
+
+    try {
+      $pdo = conectarBaseDatos();
+      HelperController::checkAndLogProcedures($pdo, ['sp_codigo_producto_existe']);
+      $stmt = $pdo->prepare("CALL sp_codigo_producto_existe(:id, :codigo)");
+      $stmt->execute([
+        ':id' => $id,
+        ':codigo' => $codigo
+      ]);
+
+      $result = $stmt->fetch(PDO::FETCH_ASSOC);
+      $result = json_decode($result['result'], true);
+
+      echo json_encode([
+        'success' => true,
+        'exists' => isset($result['exists']) ? (bool) $result['exists'] : false,
+        'message' => ((isset($result['exists']) && $result['exists']) ? 'El codigo ya existe' : 'El codigo no existe'),
+        'data' => isset($result['data']) ? $result['data'] : null,
+      ]);
+    } catch (PDOException $e) {
+      http_response_code(500);
+      echo json_encode(['success' => false, 'error' => 'db_error', 'message' => 'Error al verificar existencia del codigo: ' . $e->getMessage()]);
     }
   }
 }
