@@ -225,8 +225,8 @@ $user = getCurrentUser();
 
                     <div class="checkbox-container align-content-start">
                       <div class="checkbox-wrapper">
-                        <input class="checkbox" id="checkboxActivo" type="checkbox" />
-                        <label class="checkbox-label" for="checkboxActivo">
+                        <input class="checkbox" id="checkboxProductoActivo" type="checkbox" />
+                        <label class="checkbox-label" for="checkboxPro  ductoActivo">
                           <div class="checkbox-flip">
                             <div class="checkbox-front">
                               <svg
@@ -256,7 +256,7 @@ $user = getCurrentUser();
                         </label>
                       </div>
                     </div>
-                    <h5 id="lblActivo">Activo</h5>
+                    <h5 id="lblProductoActivo">Activo</h5>
                   </div>
                 </div>
 
@@ -307,7 +307,7 @@ $user = getCurrentUser();
                     class="btn btn-outline-info"
                     title="Grabar producto">
                     <div class="parent-container">
-                      <span class="material-symbols-outlined">save</span>&nbsp;Grabar 
+                      <span class="material-symbols-outlined">save</span>&nbsp;Grabar
                     </div>
                   </button>
                   <button
@@ -366,6 +366,8 @@ $user = getCurrentUser();
                 </div>
               </div>
 
+            </div>
+            <div class="card-container">  
               <div class="card">
                 <div class="card-header">
                   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">

@@ -159,6 +159,12 @@ if (strpos($uri, '/api/usuarios') !== false) {
   Rutas para inventario
 */
 if (strpos($uri, '/api/inventario') !== false) {
+
+  if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/inventario/check-exists') !== false) {
+    \App\Controllers\InventarioController::chkExiste();
+    exit;
+  }
+
   if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     \App\Controllers\InventarioController::get_listado();
     exit;

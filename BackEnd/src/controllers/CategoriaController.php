@@ -26,7 +26,6 @@ class CategoriaController
       }
     }
 
-
     $maybeDb = __DIR__ . '/../../config/db.php';
     if (file_exists($maybeDb))
       require_once $maybeDb;

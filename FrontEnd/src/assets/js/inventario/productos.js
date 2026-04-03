@@ -14,6 +14,11 @@ class ProductosManager {
 
     this.interBase = this.BASE_URL + "/backend/public/index.php/api/inventario";
 
+    this.URL_CHK_EXIST_PRODUCTO = this.interBase + "/check-exist";
+
+    this.URL_CHK_EXIST_CODGIO =
+      this.BASE_URL + "/backend/public/index.php/api/codigos/check-exist";
+
     this.URL_SEARCH_CATEGORIAS =
       this.BASE_URL + "/backend/public/index.php/api/categorias/search";
 
@@ -42,10 +47,13 @@ class ProductosManager {
     this.unidad_medida_input = document.getElementById("unidad_input");
     this.unidad_medida_id = document.getElementById("unidad_id");
     this.stock_minimo = document.getElementById("tStockMinimo");
+    this.checkboxProductoActivo = document.getElementById(
+      "checkboxProductoActivo",
+    );
     this.checkboxActivo = document.getElementById("checkboxActivo");
     this.checkboxInventario = document.getElementById("checkboxInventario");
     this.cTipo = document.getElementById("cTipo");
-    this.lblActivo = document.getElementById("lblActivo");
+    this.lblProductoActivo = document.getElementById("lblProductoActivo");
     this.btnAddCodigo = document.getElementById("btn_add_Codigos");
     this.btnAddPrecio = document.getElementById("btn_add_Precios");
 
@@ -84,11 +92,11 @@ class ProductosManager {
       (it) => it.nombre,
     );
 
-    this.checkboxActivo.onchange = function () {
+    this.checkboxProductoActivo.onchange = function () {
       if (this.checked) {
-        lblActivo.textContent = "Activo";
+        this.lblProductoActivo.textContent = "Activo";
       } else {
-        lblActivo.textContent = "Inactivo";
+        this.lblActivo.textContent = "Inactivo";
       }
     };
 
@@ -119,10 +127,10 @@ class ProductosManager {
       this.unidad_medida_id.value = this.producto.unidad_medida_id;
       this.unidad_medida_input.value = this.producto.unidad_medida;
       this.stock_minimo.value = this.producto.stock_minimo;
-      this.checkboxActivo.checked = this.producto.activo == 1;
+      this.checkboxProductoActivo.checked = this.producto.activo == 1;
       this.checkboxInventario.checked = this.producto.maneja_inventario == 1;
       this.cTipo.value = this.producto.tipo;
-      this.lblActivo.textContent =
+      this.lblProductoActivo.textContent =
         this.producto.activo == 1 ? "Activo" : "Inactivo";
       this.renderCodigos(this.producto.codigos);
 
@@ -240,25 +248,25 @@ class ProductosManager {
 
           return `
             <tr data-id="${id}"">
-              <td class="align-middle d-none d-sm-table-cell" 
+              <td class="align-middle text-end d-none d-sm-table-cell" title="Precio de compra" 
             data-label="Costo">${Utils.formatNumbers(r.precio_compra, 2)}</td>
 
-            <td class="align-middle d-none d-sm-table-cell" 
-            data-label="Utilidad" title ="Ganancia de: ${Utils.formatNumbers(r.utilidad_absoluta, 2)}"><code>${Utils.formatNumbers(r.margen_sobre_costo, 2)}</code></td>
+            <td class="align-middle text-end d-none d-sm-table-cell" title="Ganancia sobre costo"
+            data-label="Utilidad" title ="Ganancia de: ${Utils.formatNumbers(r.utilidad_absoluta, 2)}">${Utils.formatNumbers(r.margen_sobre_costo, 2)}</td>
 
-            <td class="align-middle d-none d-sm-table-cell" 
+            <td class="align-middle text-end d-none d-sm-table-cell" title="Precio de venta"
             data-label="Venta">${Utils.formatNumbers(r.precio_venta, 2)}</td>
             
-            <td class="align-middle d-none d-sm-table-cell" 
+            <td class="align-middle text-end d-none d-sm-table-cell" title="Precio de oferta"
             data-label="Venta">${Utils.formatNumbers(r.precio_oferta, 2)}</td>
 
-            <td class="align-middle d-none d-sm-table-cell" 
+            <td class="align-middle text-center d-none d-sm-table-cell" 
             data-label="Venta">${badgeOferta}</td>
 
-           <td class="align-middle d-none d-sm-table-cell" 
+           <td class="align-middle text-end d-none d-sm-table-cell" title="Ganancia sobre venta"
             data-label="Venta">${Utils.formatNumbers(r.margen_sobre_venta, 2)}</td>
 
-            <td class="align-middle d-none d-sm-table-cell" 
+            <td class="align-middle text-center d-none d-sm-table-cell" 
             data-label="Estado">${badgeEstado || ""}</td>
 
             <td class="align-middle text-center">
@@ -406,7 +414,6 @@ class ProductosManager {
             throw new Error(result.message || "Error guardando");
           }
         } else {
-          
         }
         // Cerrar el modal actual
         Swal.close();
@@ -602,10 +609,16 @@ function obtnerBadgeEstado(estado) {
 
 function obtnerBadgeOferta(inicio, fin) {
   let estado = "";
-  if (!inicio || !fin) return "";
 
   let icon = "alarm_on";
   let color = "secondary";
+
+  if (!inicio || !fin) {
+    icon = "do_not_disturb_off";
+    estado = "Sin Oferta";
+    return `<span class=\"badge bg-${color}\"><span class=\"material-symbols-outlined 
+    align-middle\" style=\"font-size:16px;vertical-align:middle;\">${icon}</span> ${Utils.escapeHtml(estado)}</span>`;
+  }
 
   const dateInicio = new Date(inicio);
   const dateFin = new Date(fin);
@@ -616,7 +629,7 @@ function obtnerBadgeOferta(inicio, fin) {
     estado = "Activa";
   } else {
     icon = "do_not_disturb_off";
-    estado = "Inactiva";
+    estado = "Sin Oferta";
   }
 
   return `<span class=\"badge bg-${color}\"><span class=\"material-symbols-outlined 
