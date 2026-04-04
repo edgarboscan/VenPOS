@@ -3206,7 +3206,9 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_producto_actualizar_json`(
     IN p_stock_minimo DECIMAL(12,2),
     IN p_maneja_inventario TINYINT(1),
     IN p_activo TINYINT(1),
-    IN p_componentes JSON
+    IN p_componentes JSON,  -- JSON array de componentes: [{"producto_componente_id": 10, "cantidad": 2}]
+    IN p_precios JSON,  -- JSON array de precios: [{"precio_compra": 0.00,  "precio_venta": 0.00,  "precio_oferta": 0.00,  "fecha_inicio_oferta": y/m/d, "fecha_fin_oferta": y/m/d, "activo": 1 }]
+    IN p_codigos JSON  -- JSON array de codigos: [{"tipo_codigo": 'EAN13', "codigo": 0000000, "Activo": 1}]
 )
 BEGIN
     DECLARE v_exists INT;
@@ -3255,6 +3257,53 @@ BEGIN
                 END WHILE;
             END IF;
         END IF;
+        
+        -- Actualizar Precios
+        
+        IF p_precios IS NOT NULL AND JSON_LENGTH(p_precios) > 0 THEN
+			DELETE FROM precios WHERE producto_id = p_id;
+			SET v_len = JSON_LENGTH(p_precios);
+            WHILE v_idx < v_len DO
+				SET @v_precio_compra = JSON_UNQUOTE(JSON_EXTRACT(p_precios, CONCAT('$[', v_idx, '].precio_compra')));
+                SET @v_precio_venta = JSON_UNQUOTE(JSON_EXTRACT(p_precios, CONCAT('$[', v_idx, '].precio_venta')));
+                SET @v_precio_oferta = JSON_UNQUOTE(JSON_EXTRACT(p_precios, CONCAT('$[', v_idx, '].precio_oferta')));
+                SET @v_fecha_inicio_oferta = JSON_UNQUOTE(JSON_EXTRACT(p_precios, CONCAT('$[', v_idx, '].fecha_inicio_oferta')));
+                SET @v_fecha_fin_oferta = JSON_UNQUOTE(JSON_EXTRACT(p_precios, CONCAT('$[', v_idx, '].fecha_fin_oferta')));
+                SET @v_activo = JSON_UNQUOTE(JSON_EXTRACT(p_precios, CONCAT('$[', v_idx, '].activo')));
+                
+                IF @v_fecha_inicio_oferta IS NULL THEN
+					SET @v_fecha_inicio_oferta = '1900-01-01';
+				END IF;
+                
+                IF @v_fecha_fin_oferta IS NULL THEN
+					SET @v_fecha_fin_oferta = '1900-01-01';
+				END IF;
+                
+                INSERT INTO `ven_pos`.`precios`
+					(`empresa_id`, `producto_id`, `precio_compra`, `precio_venta`, `precio_oferta`, `fecha_inicio_oferta`,
+                    `fecha_fin_oferta`, `activo`) 
+				VALUES(@app_empresa_id, v_id,  @v_precio_compra, @v_precio_venta, @v_precio_oferta, @v_fecha_inicio_oferta, 
+					@v_fecha_fin_oferta, @v_activo);                
+                SET v_idx = v_idx + 1;
+            END WHILE;
+        END IF;
+        
+        -- Actualizar Codigos
+        IF p_codigos IS NOT NULL AND JSON_LENGTH(p_codigos) > 0 THEN
+			DELETE FROM codigos_productos WHERE producto_id = p_id;
+			SET v_len = JSON_LENGTH(p_codigos);
+            WHILE v_idx < v_len DO
+				SET @v_tipo_codigo = JSON_UNQUOTE(JSON_EXTRACT(p_codigos, CONCAT('$[', v_idx, '].tipo_codigo')));
+                SET @v_codigo = JSON_UNQUOTE(JSON_EXTRACT(p_codigos, CONCAT('$[', v_idx, '].codigo')));
+                SET @v_activo = JSON_UNQUOTE(JSON_EXTRACT(p_codigos, CONCAT('$[', v_idx, '].activo')));
+                INSERT INTO `ven_pos`.`codigos_productos` 
+					(`producto_id`, `tipo_codigo`, `codigo`, `activo`) 
+                    VALUES(v_id, @v_tipo_codigo, @v_codigo, @v_activo);
+
+                SET v_idx = v_idx + 1;
+            END WHILE;
+        END IF;
+                
         
         COMMIT;
         SELECT JSON_OBJECT('status', 'success', 'message', 'Producto actualizado') AS result;
@@ -5684,4 +5733,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-03 10:45:25
+-- Dump completed on 2026-04-04 13:28:10
