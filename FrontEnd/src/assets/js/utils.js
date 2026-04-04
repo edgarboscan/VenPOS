@@ -48,7 +48,10 @@ class Utils {
         el.fadeIn();
         el.style.display = "block";
       }
-    } catch (e) { }
+    } catch (e) {
+      console.error("showSpinner error", e.message);
+    }
+
   }
 
   /**
@@ -68,7 +71,7 @@ class Utils {
     }
     return container;
   }
-  
+
   /** 
    * Configura el toast para que sea mas rapido y no se bloquee
    */

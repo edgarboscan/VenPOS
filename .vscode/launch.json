@@ -6,7 +6,7 @@
       "type": "php",
       "request": "launch",
       "port": 9003,
-      "runtimeExecutable": "C:\\xampp\\php\\php.exe",
+      "runtimeExecutable": "F:\\xampp\\php\\php.exe",
       "runtimeArgs": ["-S", "localhost:8000", "-t", "."],
       "cwd": "${workspaceFolder}",
       "ignore": ["**/vendor/**/*.php"],

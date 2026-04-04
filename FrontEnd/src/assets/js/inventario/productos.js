@@ -112,6 +112,9 @@ class ProductosManager {
 
   loadProductoData() {
     try {
+
+      Utils.showSpinner();
+
       const json = this.getParameterByName("datos");
       this.producto = JSON.parse(json);
       console.log("Producto recibido:", this.producto);
@@ -138,7 +141,7 @@ class ProductosManager {
     } catch (error) {
       console.error("Error al cargar productos:", error);
     } finally {
-      Utils.hideSpinner();
+      // Utils.hideSpinner();
 
       document.querySelectorAll(".skeleton-content").forEach((skel) => {
         skel.style.display = "none";

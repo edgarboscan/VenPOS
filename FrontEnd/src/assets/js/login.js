@@ -78,12 +78,12 @@ class LoginManager {
       }
     }
 
-    const errors = this.verifyPassword(password);
+    // const errors = this.verifyPassword(password);
 
-    if (errors.length > 0) {
-      this.showNotice("error", errors.join("<br>"), 6000);
-      return;
-    }
+    // if (errors.length > 0) {
+    //   this.showNotice("error", errors.join("<br>"), 6000);
+    //   return;
+    // }
 
     this.showNotice("", "");
     this.card.classList.remove("error", "success");
