@@ -3,6 +3,8 @@ $base = __DIR__ . '/..';
 require './src/utils/auth.php';
 require './src/utils/curl.php';
 
+// Destruir la sesión activa al entrar a la página de login
+logout1();
 
 $currentPage = $_SERVER['PHP_SELF'] ?? basename(__FILE__);
 // Si ya está logueado, redirigir al dashboard

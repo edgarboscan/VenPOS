@@ -36,7 +36,7 @@
     "HEALTH": false,
   },
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
   "[php]": {
     "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"

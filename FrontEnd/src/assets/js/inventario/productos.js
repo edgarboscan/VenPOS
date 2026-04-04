@@ -162,22 +162,23 @@ class ProductosManager {
       tbody.innerHTML = codigos
         .map((r) => {
           const id = r.id || "";
+          const codigo = r.codigo || "";
           const badgeEstado = obtnerBadgeEstado(r.activo);
 
           const btns = [];
 
           if (productosManager.canEdit)
             btns.push(
-              `<button class="btn btn-sm btn-warning btn-edit round-4 border-0" data-id="${r.id}" ><i class="material-symbols-rounded">edit</i></button>`,
+              `<button class="btn btn-sm btn-warning btn-edit round-4 border-0" data-id="${r.id}" data-codigo="${codigo}" ><i class="material-symbols-rounded">edit</i></button>`,
             );
 
           if (productosManager.canDelete)
             btns.push(
-              `<button class="btn btn-sm btn-danger btn-delete round-4 border-0" data-id="${r.id}" ><i class="material-symbols-rounded">delete</i></button>`,
+              `<button class="btn btn-sm btn-danger btn-delete round-4 border-0" data-id="${r.id}" data-codigo="${codigo}" ><i class="material-symbols-rounded">delete</i></button>`,
             );
 
           return `
-            <tr data-id="${id}"">
+            <tr data-id="${id}" >
               <td class="align-middle d-none d-sm-table-cell" 
             data-label="Costo">${Utils.escapeHtml(r.tipo_codigo.replace("_", " "))}</td>
 
@@ -201,7 +202,7 @@ class ProductosManager {
 
     tbody.querySelectorAll(".btn-edit").forEach((b) =>
       b.addEventListener("click", (e) => {
-        this.openModalCodigo(b.getAttribute("data-id"));
+        this.openModalCodigo(b.getAttribute("data-id"), b.getAttribute("data-codigo"));
       }),
     );
 
@@ -302,12 +303,12 @@ class ProductosManager {
    * @param {*} id
    */
 
-  async openModalCodigo(id) {
+  async openModalCodigo(id, codigo = "") {
     // lógica para abrir el modal de edición o creación de codigo
     console.log("Abrir modal para codigo ID:", id);
     // Aquí puedes implementar la lógica para mostrar un modal con los detalles del codigo
     await Utils.ensureSwal();
-    const isNew = !id;
+    const isNew = !id && !codigo;
     const title = isNew ? "Nuevo Codigo" : "Editar Codigo";
 
     // Function to check for duplicates
@@ -351,87 +352,48 @@ class ProductosManager {
     }
 
     async function guardar() {
-      const popup = Swal.getPopup();
-      const form = popup.querySelector("#swal-form");
+      try {
+        Swal.showLoading();
+        const popup = Swal.getPopup();
+        const form = popup.querySelector("#swal-form");
 
-      const codigo = form.querySelector('[name="codigo"]').value.trim();
+        const id = form.querySelector('[name="id"]').value.trim();
+        const tTipoCodigo = form.querySelector("#tTipoCodigo");
+        const tCodigo = form.querySelector("#tCodigo");
+        const checkboxActivo = form.querySelector("#checkboxActivo");
 
-      // Verificar duplicados (solo para nuevos insumos)
-      if (isNew) {
-        const duplicate = JSON.parse(await checkDuplicate(codigo));
-        if (duplicate.success) {
-          Swal.showValidationMessage(
-            `Ya existe un insumo  con este codigo.<br />${duplicate.msj}`,
-          );
+
+        if (tCodigo.value == "") {
+          Swal.showValidationMessage("Codigo es requerido");
           return false;
         }
-      }
 
-      // Recopilar datos del formulario
-      const data = {
-        id: form.querySelector('[name="id"]')?.value || null,
-        codigo: codigo,
-        tipo_codigo: form.querySelector("#tTipoCodigo").value,
-        activo: form.querySelector("#checkboxActivo").checked ? 1 : 0,
-      };
-
-      if (!data.codigo) {
-        Swal.showValidationMessage("codigo es requerida");
-        return false;
-      }
-
-      if (!data.tipo_codigo) {
-        Swal.showValidationMessage("Tipo de codigo es requerido");
-        return false;
-      }
-
-      if (!data.activo) {
-        Swal.showValidationMessage("Activo es requerido");
-        return false;
-      }
-
-      // Mostrar indicador de carga
-      Swal.showLoading();
-
-      // Enviar al servidor
-      try {
-        if (!isNew) {
-          const resp = await fetch(
-            interBase + (data.id ? "/update" : "/create"),
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(data),
-            },
-          );
-
-          const result = await resp.json();
-
-          if (!result || result.status !== "success") {
-            throw new Error(result.message || "Error guardando");
-          }
-        } else {
+        if (tTipoCodigo.value == "") {
+          Swal.showValidationMessage("Tipo de codigo es requerido");
+          return false;
         }
-        // Cerrar el modal actual
-        Swal.close();
 
-        // Mostrar mensaje de éxito
-        Utils.showSwalSB(
-          "success",
-          "¡Guardado!",
-          result.message || "Paciente guardado exitosamente",
-          1500,
-        );
+        const data = {
+          id: id,
+          producto_id: productosManager.producto.id,
+          codigo: tCodigo.value,
+          tipo_codigo: tTipoCodigo.value,
+          activo: checkboxActivo.checked ? 1 : 0,
+        };
+        const codigoData = productosManager.producto.codigos.find((c) => c.id == data.id || c.codigo == data.codigo);
+        if (codigoData) {
+          productosManager.producto.codigos = productosManager.producto.codigos.filter(c => c.id !== data.id || c.codigo !== data.codigo);
+        }
 
-        // Recargar la tabla
-        await loadTable();
+        productosManager.producto.codigos.push(data);
+
+        form.reset();
+        productosManager.renderCodigos(productosManager.producto.codigos);
 
         return true;
-      } catch (err) {
+      } catch (error) {
         Swal.hideLoading();
-        Swal.showValidationMessage(
-          err.message || "Error guardando el paciente",
-        );
+        Swal.showValidationMessage(error.message || "Error al guardar");
         return false;
       }
     }
@@ -458,8 +420,8 @@ class ProductosManager {
             Swal.resetValidationMessage();
             // Tu código aquí
           }, 3000);
-        } 
-      } catch (e) {}
+        }
+      } catch (e) { }
     }
 
     const modalHTML = `
@@ -564,7 +526,6 @@ class ProductosManager {
         const form = popup.querySelector("#swal-form");
         const checkbox = form.querySelector("#checkboxActivo");
         const lblActivo = form.querySelector("#lblActivo");
-        const tTipoCodigo = form.querySelector("#tTipoCodigo");
         const tCodigo = form.querySelector("#tCodigo");
 
         // evitar que Enter cierre el modal o dispare el submit accidentalmente
@@ -587,7 +548,7 @@ class ProductosManager {
               }
             }
           });
-        } catch (e) {}
+        } catch (e) { }
 
         tCodigo.addEventListener("keydown", async function (ev) {
           if (ev.key === "Enter") {
@@ -605,7 +566,7 @@ class ProductosManager {
 
         if (!isNew) {
           // cargar datos del codigo en el formulario
-          const codigoData = this.codigos.find((c) => c.id == id);
+          const codigoData = this.codigos.find((c) => c.id == id || c.codigo == codigo);
           if (codigoData) {
             form.codigo.value = codigoData.codigo;
             form.tTipoCodigo.value = codigoData.tipo_codigo;
@@ -623,8 +584,19 @@ class ProductosManager {
               lblActivo.textContent = "Inactivo";
             }
           };
-        } catch (error) {}
+        } catch (error) { }
         // evitar que Enter cierre el modal o dispare el s
+      },
+      preConfirm: async (result) => {
+        const isValid = await guardar();
+        if (!isValid) {
+          // Mantener el modal abierto si la validación falla
+          return false;
+        }
+        else {
+          Utils.sToast("Codigo agregado exitosamente", "success");
+        }
+
       },
     });
   }

@@ -48,7 +48,7 @@ class Utils {
         el.fadeIn();
         el.style.display = "block";
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   /**
@@ -68,6 +68,27 @@ class Utils {
     }
     return container;
   }
+  
+  /** 
+   * Configura el toast para que sea mas rapido y no se bloquee
+   */
+  static setupToast() {
+    return Swal.mixin({
+      toast: true,
+      position: "top-end",
+      iconColor: "white",
+      customClass: {
+        popup: "colored-toast",
+      },
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      didOpen: (toast) => {
+        toast.addEventListener("mouseenter", Swal.stopTimer);
+        toast.addEventListener("mouseleave", Swal.resumeTimer);
+      },
+    });
+  }
 
   /**
    * Oculta el spinner de carga si existe.
@@ -80,7 +101,7 @@ class Utils {
         document.getElementById("spinner-carga") ||
         document.getElementById("spinner");
       if (el) el.style.display = "none";
-    } catch (e) {}
+    } catch (e) { }
   }
 
   /**
@@ -95,7 +116,7 @@ class Utils {
     toast.textContent = message;
     // basic styling + initial transform for slide-up effect
     toast.style.cssText =
-      "min-width:220px;padding:0.5rem 1rem;border-radius:.25rem;color:#fff;opacity:0;transform:translateY(-20px);box-shadow:0 2px 6px rgba(0,0,0,.2);transition:opacity .3s,transform .3s;";
+      "min-width:220px;padding:1.5rem 1rem;border-radius:.25rem;color:#fff;opacity:0;transform:translateY(-20px);box-shadow:0 2px 6px rgba(0,0,0,.2);transition:opacity .3s,transform .3s;";
     switch (type) {
       case "success":
         toast.style.backgroundColor = "#28a745";
@@ -123,6 +144,20 @@ class Utils {
       toast.style.transform = "translateY(-20px)";
       setTimeout(() => container.removeChild(toast), 300);
     }, 1500);
+  }
+
+  /**
+     * Muestra un toast breve (auto-dismiss) en pantalla.
+     *
+     * @param {string} message - Texto a mostrar en el toast.
+     * @param {"success"|"warning"|"danger"|"error"|string} [type="success"] - Tipo de toast.
+     */
+  static sToast(message, type = "success") {
+    this.toast = this.setupToast();
+    this.toast.fire({
+      icon: type,
+      title: message,
+    });
   }
 
   // custom confirmation box that avoids using SweetAlert2 directly and
@@ -645,7 +680,7 @@ class Utils {
           list = p.querySelector(`#${listId}`) || null;
         }
       }
-    } catch (e) {}
+    } catch (e) { }
     if (!input) input = document.getElementById(inputId);
     if (!list) list = document.getElementById(listId);
     if (!input || !list) return;
@@ -700,7 +735,7 @@ class Utils {
         }
         updateHidden();
       }
-    } catch (e) {}
+    } catch (e) { }
 
     const doSearch = Utils.debounce(async (q) => {
       if (!q || q.length < 2) {
@@ -746,7 +781,7 @@ class Utils {
           const label =
             labelFn ?
               labelFn(itt)
-            : itt.nombre || itt.nombre_completo || itt.id;
+              : itt.nombre || itt.nombre_completo || itt.id;
           div.textContent = label;
 
           div.addEventListener("click", () => {
