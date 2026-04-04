@@ -10,8 +10,8 @@ class ConfigController
   public static function get()
   {
     header('Content-Type: application/json; charset=utf-8');
-    if (!class_exists(Helper::class)) {
-      $maybe = __DIR__ . '/Helper.php';
+    if (!class_exists(HelperController::class)) {
+      $maybe = __DIR__ . '/HelperController.php';
       if (file_exists($maybe)) {
         require_once $maybe;
       }

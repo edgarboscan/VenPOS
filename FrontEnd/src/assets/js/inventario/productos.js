@@ -351,7 +351,7 @@ class ProductosManager {
       });
     }
 
-    async function guardar() {
+    async function newCodigo() {
       try {
         Swal.showLoading();
         const popup = Swal.getPopup();
@@ -360,7 +360,6 @@ class ProductosManager {
         const id = form.querySelector('[name="id"]').value.trim();
         const tTipoCodigo = form.querySelector("#tTipoCodigo");
         const tCodigo = form.querySelector("#tCodigo");
-        const checkboxActivo = form.querySelector("#checkboxActivo");
 
 
         if (tCodigo.value == "") {
@@ -387,15 +386,67 @@ class ProductosManager {
 
         productosManager.producto.codigos.push(data);
 
-        form.reset();
         productosManager.renderCodigos(productosManager.producto.codigos);
-
+        form.reset();
+        Swal.hideLoading();
         return true;
       } catch (error) {
+        Swal.showValidationMessage(error.message || "Error al guardar");
+        throw new Error(result.message || "Error al crear el codigo");
+      }
+
+    }
+
+    async function editCodigo(id) {
+      try {
+        Swal.showLoading();
+        const popup = Swal.getPopup();
+        const form = popup.querySelector("#swal-form");
+        const tTipoCodigo = form.querySelector("#tTipoCodigo");
+        const tCodigo = form.querySelector("#tCodigo");
+
+        const data = {
+          id: id,
+          producto_id: productosManager.producto.id,
+          codigo: tCodigo.value,
+          tipo_codigo: tTipoCodigo.value,
+          activo: checkboxActivo.checked ? 1 : 0,
+        };
+
+        const response = await fetch(`${productosManager.interBase}/actualizar-codigo`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // actualizar el codigo en la lista local
+          const index = productosManager.producto.codigos.findIndex((c) => c.id == id);
+          if (index !== -1) {
+            productosManager.producto.codigos[index] = data;
+            productosManager.renderCodigos(productosManager.producto.codigos);
+          }
+          form.reset();
+          Swal.hideLoading();
+          return true;
+        } else {
+          swal.showValidationMessage(result.message || "Error al actualizar el codigo");
+          form.reset();
+          Swal.hideLoading();
+          throw new Error(result.message || "Error al actualizar el codigo");
+        }
+
+      }
+      catch (error) {
         Swal.hideLoading();
         Swal.showValidationMessage(error.message || "Error al guardar");
         return false;
       }
+
     }
 
     async function validaCodigo(value, objecto) {
@@ -588,7 +639,7 @@ class ProductosManager {
         // evitar que Enter cierre el modal o dispare el s
       },
       preConfirm: async (result) => {
-        const isValid = await guardar();
+        const isValid = id ? await editCodigo(id) : await newCodigo();
         if (!isValid) {
           // Mantener el modal abierto si la validación falla
           return false;

@@ -174,34 +174,54 @@ if (strpos($uri, '/api/inventario') !== false) {
     \App\Controllers\InventarioController::get_listado();
     exit;
   }
-}
 
-/*
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    \App\Controllers\InventarioController::guardar();
+    exit;
+  }
+
+  if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    \App\Controllers\InventarioController::eliminar();
+    exit;
+  }
+
+  if ($_SERVER['REQUEST_METHOD'] === 'PUT' && strpos($uri, '/api/inventario/actualizar-producto') !== false) {
+    \App\Controllers\InventarioController::actualizar();
+    exit;
+  }
+
+  if ($_SERVER['REQUEST_METHOD'] === 'PUT' && strpos($uri, '/api/inventario/actualizar-codigo') !== false) {
+    \App\Controllers\InventarioController::actualizarCodigo();
+    exit;
+  }
+
+  /*
   Rutas para categorías
 */
-if (strpos($uri, '/api/categorias') !== false) {
-  if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/categorias/search') !== false) {
-    \App\Controllers\CategoriaController::search();
-    exit;
+  if (strpos($uri, '/api/categorias') !== false) {
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/categorias/search') !== false) {
+      \App\Controllers\CategoriaController::search();
+      exit;
+    }
   }
-}
 
-/*
+  /*
   Rutas para unidades de medida
 */
-if (strpos($uri, '/api/unidad-medida') !== false) {
-  if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/unidad-medida/search') !== false) {
-    \App\Controllers\UnidadMedidaController::search();
-    exit;
+  if (strpos($uri, '/api/unidad-medida') !== false) {
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/unidad-medida/search') !== false) {
+      \App\Controllers\UnidadMedidaController::search();
+      exit;
+    }
   }
-}
 
-/*
+  /*
   Rutas para marcas
 */
-if (strpos($uri, '/api/marcas') !== false) {
-  if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/marcas/search') !== false) {
-    \App\Controllers\MarcaController::search();
-    exit;
+  if (strpos($uri, '/api/marcas') !== false) {
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && strpos($uri, '/api/marcas/search') !== false) {
+      \App\Controllers\MarcaController::search();
+      exit;
+    }
   }
 }

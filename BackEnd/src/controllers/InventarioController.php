@@ -16,6 +16,8 @@ use PDO;
  */
 class InventarioController
 {
+  //============================ Area Productos ============================ 
+
   /**
    * Método para manejar solicitudes GET a /api/inventario
    * Actualmente devuelve un mensaje de que el método no está implementado y carga la configuración de la base de datos si existe.
@@ -151,6 +153,34 @@ class InventarioController
     }
   }
 
+  /**
+   * Método para manejar solicitudes POST a /api/inventario
+   * Actualmente devuelve un mensaje de que el método no está implementado.
+   */
+  public static function guardar()
+  {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'message' => 'Método guardar no implementado']);
+  }
+  /**
+   * Método para manejar solicitudes DELETE a /api/inventario
+   * Actualmente devuelve un mensaje de que el método no está implementado.
+   */
+
+  public static function eliminar()
+  {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'message' => 'Método eliminar no implementado']);
+  }
+
+  public static function actualizar()
+  {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'message' => 'Método actualizar no implementado']);
+  }
+
+
+  //============================ Area Codigos ============================ 
 
   /**
    * Método para manejar solicitudes GET a /api/inventario/chkCodigoExiste
@@ -173,6 +203,13 @@ class InventarioController
     $id = $_GET['id'] ?? null;
     $codigo = $_GET['codigo'] ?? null;
 
+
+    if ($id === null && $codigo === null) {
+      http_response_code(400);
+      echo json_encode(['success' => false, 'error' => 'missing_parameters', 'message' => 'Falta el ID o el código para verificar']);
+      return;
+    }
+
     try {
       $pdo = conectarBaseDatos();
       HelperController::checkAndLogProcedures($pdo, ['sp_codigo_producto_existe']);
@@ -194,6 +231,91 @@ class InventarioController
     } catch (PDOException $e) {
       http_response_code(500);
       echo json_encode(['success' => false, 'error' => 'db_error', 'message' => 'Error al verificar existencia del codigo: ' . $e->getMessage()]);
+    }
+  }
+
+  public static function guardarCodigo()
+  {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'message' => 'Método guardarCodigo no implementado']);
+  }
+
+  public static function eliminarCodigo()
+  {
+    header('Content-Type: application/json; charset=utf-8');
+
+    if (!class_exists(HelperController::class)) {
+      $maybe = __DIR__ . '/HelperController.php';
+      if (file_exists($maybe)) {
+        require_once $maybe;
+      }
+    }
+
+    $maybeDb = __DIR__ . '/../../config/db.php';
+    if (file_exists($maybeDb))
+      require_once $maybeDb;
+
+    $id = $_GET['id'] ?? null;
+
+
+    if ($id === null && $codigo === null || $producto_id === null || $tipo_codigo === null) {
+      http_response_code(400);
+      echo json_encode(['success' => false, 'error' => 'missing_parameters', 'message' => 'Falta el ID o el código para eliminar']);
+      return;
+    }
+  }
+
+  public static function actualizarCodigo()
+  {
+    header('Content-Type: application/json; charset=utf-8');
+    if (!class_exists(HelperController::class)) {
+      $maybe = __DIR__ . '/HelperController.php';
+      if (file_exists($maybe)) {
+        require_once $maybe;
+      }
+    }
+
+    $maybeDb = __DIR__ . '/../../config/db.php';
+    if (file_exists($maybeDb))
+      require_once $maybeDb;
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    if ($input) {
+      $id = $input['id'] ?? null;
+      $codigo = $input['codigo'] ?? null;
+      $tipo_codigo = $input['tipo_codigo'] ?? null;
+      $activo = $input['activo'] ?? null;
+    } else {
+      http_response_code(500);
+      echo json_encode(['success' => false, 'error' => 'db_error', 'message' => 'Error al procesar la solicitud: no se pudo parsear el JSON de entrada']);
+      return;
+    }
+
+    if ($id === null && $codigo === null || $tipo_codigo === null) {
+      http_response_code(400);
+      echo json_encode(['success' => false, 'error' => 'missing_parameters', 'message' => 'Falta el ID o el código para eliminar']);
+      return;
+    }
+
+    try {
+      $pdo = conectarBaseDatos();
+      HelperController::checkAndLogProcedures($pdo, ['sp_codigo_producto_actualizar_json']);
+      $stmt = $pdo->prepare("CALL sp_codigo_producto_actualizar_json(:id,  :tipo_codigo, :codigo, :activo)");
+      $stmt->execute([
+        ':id' => $id,
+        ':tipo_codigo' => $tipo_codigo,
+        ':codigo' => $codigo,
+        ':activo' => $activo
+      ]);
+
+      echo json_encode([
+        'success' => true,
+        'message' => 'Código actualizado exitosamente'
+      ]);
+      exit;
+    } catch (PDOException $e) {
+      http_response_code(500);
+      echo json_encode(['success' => false, 'error' => 'db_error', 'message' => 'Error al actualizar el código: ' . $e->getMessage()]);
     }
   }
 }
