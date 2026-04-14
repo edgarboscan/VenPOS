@@ -36,6 +36,8 @@ class ProductosManager {
     this.canEdit = true;
     this.canDelete = true;
 
+    this.hasChanges = false; // Nueva propiedad para rastrear cambios
+
     this.codigo = document.getElementById("tCodigo");
     this.nombre = document.getElementById("tNombre");
     this.descripcion = document.getElementById("tDescripcion");
@@ -55,6 +57,8 @@ class ProductosManager {
     this.lblProductoActivo = document.getElementById("lblProductoActivo");
     this.btnAddCodigo = document.getElementById("btn_add_Codigos");
     this.btnAddPrecio = document.getElementById("btn_add_Precios");
+    this.btnAddNew = document.getElementById("btn_new");
+    this.btnRegresar = document.getElementById("btn_regresar");
 
     this.init();
   }
@@ -103,6 +107,82 @@ class ProductosManager {
     this.btnAddCodigo.addEventListener("click", () => this.openModalCodigo());
 
     this.btnAddPrecio.addEventListener("click", () => this.openModalPrecio());
+
+    // Agregar event listeners para detectar cambios
+    const inputs = [
+      this.codigo,
+      this.nombre,
+      this.descripcion,
+      this.categoria_input,
+      this.marca_input,
+      this.unidad_medida_input,
+      this.stock_minimo,
+      this.checkboxProductoActivo,
+      this.checkboxInventario,
+      this.cTipo
+    ];
+
+
+    this.btnAddNew.addEventListener("click", () => {
+      if (this.hasChanges) {
+        const respo = Utils.showSwallConfirm('Hay cambios sin guardar.', '¿Deseas continuar?', 'Si, Continuar', 'No, cancelar').then((result) => {
+          if (result.isConfirmed === true) {
+            {
+              inputs.forEach(input => {
+                if (input) {
+                  input.value = "";
+                }
+              });
+            }
+          } else {
+            window.location.href = productosManager.BASE_URL + "/pages/Inventario/productos.php";
+          }
+        });
+
+
+      } else {
+        imputs.forEach(input => {
+          if (input) {
+            input.value = "";
+          }
+        });
+      };
+    });
+
+    this.btnRegresar.addEventListener("click", function () {
+      if (productosManager.hasChanges) {
+        Utils.showSwallConfirm('Hay cambios sin guardar.', '¿Deseas continuar?', 'Si, Continuar', 'No, cancelar').then((result) => {
+          if (result.isConfirmed === true) {
+            window.location.href = "index.php?title=" + encodeURIComponent("Productos");
+          }
+        });
+      } else {
+        window.location.href = "index.php?title=" + encodeURIComponent("Productos");
+      }
+    });
+
+    // Agregar event listeners para detectar cambios
+
+
+    inputs.forEach(input => {
+      if (input) {
+        input.addEventListener('input', () => this.setHasChanges(true));
+        input.addEventListener('change', () => this.setHasChanges(true));
+      }
+    });
+
+    // Event listener para beforeunload
+    window.addEventListener('beforeunload', (e) => {
+      if (this.hasChanges) {
+        e.preventDefault();
+        e.returnValue = '¿Estás seguro de que quieres salir? Hay cambios sin guardar.';
+        return e.returnValue;
+      }
+    });
+  }
+
+  setHasChanges(changed) {
+    this.hasChanges = changed;
   }
 
   getParameterByName(name) {
@@ -141,7 +221,7 @@ class ProductosManager {
     } catch (error) {
       console.error("Error al cargar productos:", error);
     } finally {
-      // Utils.hideSpinner();
+      Utils.hideSpinner();
 
       document.querySelectorAll(".skeleton-content").forEach((skel) => {
         skel.style.display = "none";
@@ -149,6 +229,8 @@ class ProductosManager {
       document.querySelectorAll(".real-content").forEach((real) => {
         real.style.display = "block";
       });
+
+      this.setHasChanges(false); // Resetear cambios después de cargar datos
     }
   }
 
@@ -194,7 +276,7 @@ class ProductosManager {
             <td class="align-middle text-center">
               <div class="btn-group btn-group-sm" 
                 role="group" aria-label="Acciones de Medicos">
-                ${btns.join("")}
+                ${btns.join()}
               </div>
             </td>
           </tr>
@@ -276,7 +358,7 @@ class ProductosManager {
             <td class="align-middle text-center">
               <div class="btn-group btn-group-sm" 
                 role="group" aria-label="Acciones de Medicos">
-                ${btns.join("")}
+                ${btns.join()}
               </div>
             </td>
           </tr>
@@ -382,12 +464,41 @@ class ProductosManager {
           tipo_codigo: tTipoCodigo.value,
           activo: checkboxActivo.checked ? 1 : 0,
         };
-        const codigoData = productosManager.producto.codigos.find((c) => c.id == data.id || c.codigo == data.codigo);
-        if (codigoData) {
-          productosManager.producto.codigos = productosManager.producto.codigos.filter(c => c.id !== data.id || c.codigo !== data.codigo);
+
+        const exsiste = JSON.parse(await checkDuplicate(tCodigo.value));
+        if (exsiste.success) {
+          Swal.showValidationMessage(exsiste.msj || "Ya existe un codigo con este valor");
+          return false;
         }
 
+        if (productosManager.producto.id === 0 || productosManager.producto.id === "0" || !productosManager.producto.id) {
+          const codigoData = productosManager.producto.codigos.find((c) => c.id == data.id || c.codigo == data.codigo);
+          if (codigoData) {
+            productosManager.producto.codigos = productosManager.producto.codigos.filter(c => c.id !== data.id || c.codigo !== data.codigo);
+          }
+        }
+        else {
+
+          const response = await fetch(`${productosManager.interBase}/crear-codigo`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+          const result = await response.json();
+
+          if (!result.success) {
+            Swal.showValidationMessage(result.message || "Error al crear el codigo");
+            throw new Error(result.message || "Error al crear el codigo");
+          }
+        }
+
+
+
         productosManager.producto.codigos.push(data);
+
+        productosManager.setHasChanges(true); // Marcar cambios al agregar código
 
         productosManager.renderCodigos(productosManager.producto.codigos);
         form.reset();
@@ -431,6 +542,7 @@ class ProductosManager {
           const index = productosManager.producto.codigos.findIndex((c) => c.id == id);
           if (index !== -1) {
             productosManager.producto.codigos[index] = data;
+            productosManager.setHasChanges(true); // Marcar cambios al editar código
             productosManager.renderCodigos(productosManager.producto.codigos);
           }
           form.reset();
@@ -648,7 +760,7 @@ class ProductosManager {
           return false;
         }
         else {
-          Utils.sToast("Codigo agregado exitosamente", "success");
+          Utils.sToast("Codigo " + (isNew ? "agregado" : "actualizado") + " exitosamente", "success");
         }
 
       },
@@ -672,7 +784,7 @@ class ProductosManager {
 }
 
 function obtnerBadgeEstado(estado) {
-  if (!estado) return "";
+
   estado = estado === 1 ? "Activo" : "Inactivo";
 
   let icon = "";

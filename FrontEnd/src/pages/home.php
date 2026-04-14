@@ -7,6 +7,13 @@ require '../utils/curl.php';
 
 require_login();
 
+$infoStat = [
+    'ventas_totales' => 0,
+    'compras_totales' => 0,
+    'stock_total' => 0,
+    'alertas_reabastecimiento' => 0
+];
+
 $user = getCurrentUser();
 
 $currentPage = $_SERVER['PHP_SELF'] ?? basename(__FILE__);

@@ -20,6 +20,7 @@ $currentRequestPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
 
 // URL actual del script, se mantiene por compatibilidad, pero se usa path completo para cada menú
 $page = basename($_SERVER['PHP_SELF']);
+
 $menus = $_SESSION["menus"] ?? [];
 $roleName = '';
 if (!empty($user['rol_nombre'])) {
@@ -142,8 +143,12 @@ function hasActiveDescendant($menus, $parentId, $currentPath, $baseUrl)
         echo '<li class="' . $liClass . '"';
         if ($hasChildren) echo ' tabindex="0"';
         echo '>';
-        echo '<a class="' . $activeClass . '" href="' . htmlspecialchars($itemUrl) . '?title=' . urlencode($item['nombre'] ?? '') . '"';
-        if ($hasChildren) echo ' onclick="event.preventDefault(); this.parentNode.classList.toggle(\'open\');"';
+        $itemLabel = htmlspecialchars($item['nombre'] ?? '');
+        echo '<a class="' . $activeClass . '" href="' . htmlspecialchars($itemUrl) . '?title=' . urlencode($itemLabel) . '" title="' . $itemLabel . '" aria-label="' . $itemLabel . '" data-tooltip="' . $itemLabel . '"';
+        if ($hasChildren) {
+          echo ' onclick="event.preventDefault(); this.parentNode.classList.toggle(\'open\');"';
+          echo ' aria-haspopup="true" aria-expanded="' . ($isOpen ? 'true' : 'false') . '"';
+        }
         echo '>';
         echo '<i class="' . $iconClass . '" style="font-size: 24px;">' . htmlspecialchars($item['icono']) . '</i> ';
         echo '<span class="menu-text">' . htmlspecialchars($item['nombre']) . '</span>';

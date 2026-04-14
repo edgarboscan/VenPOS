@@ -86,9 +86,10 @@ $currentPage = $_SERVER['PHP_SELF'] ?? basename(__FILE__);
                         </div>
                     </div>
 
-                    <button id="submitBtn" type="submit" class="btn btn-login">
-                        <div class="parent-container">
-                            <span class="material-symbols-outlined">login</span> &nbsp Iniciar Sesión
+                    <button id="submitBtn" type="submit" class="btn btn-login py-3" aria-label="Iniciar sesión en el sistema GEDOLA">
+                        <span class="btn-text">INICIAR SESIÓN</span>
+                        <div class="btn-loading spinner-border spinner-border-sm d-none" role="status" aria-hidden="true">
+                            <span class="visually-hidden">Cargando...</span>
                         </div>
                     </button>
 

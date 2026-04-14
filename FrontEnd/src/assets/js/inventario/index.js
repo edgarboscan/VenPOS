@@ -21,7 +21,7 @@ class InventarioManager {
     this.URL_SEARCH_MARCAS =
       this.BASE_URL + "/backend/public/index.php/api/marcas/search";
 
-    this.URL_FORM_PRODUCTO = this.BASE_URL + "/inventario/productos.php";
+    this.URL_FORM_PRODUCTO = this.BASE_URL + "/productos.php";
 
     this.productos = [];
 
@@ -48,18 +48,8 @@ class InventarioManager {
     // Ejemplo: Agregar un evento de clic a un botón
 
     this.containerFilter = document.getElementById("filtros-container");
+    this.filterCollapse();
 
-    document
-      .getElementById("logoutBtn")
-      ?.addEventListener("click", async () => {
-        const confirmed = await Utils.showSwallConfirm(
-          "¿Cerrar sesión?",
-          "¿Estás seguro de que deseas cerrar sesión?",
-        );
-        if (confirmed) {
-          await Logout();
-        }
-      });
 
     document
       .getElementById("btn_apply_filters")
@@ -101,33 +91,13 @@ class InventarioManager {
       .addEventListener("click", () => {
         if (!this.containerFilter) return;
 
-        const btn = document.getElementById("btn_toggle_filters");
-        if (!btn) return;
+        this.filterCollapse();
 
-        const minMargin = 15; // margen mínimo entre botón y contenido
-        const targetHeight = btn.offsetHeight + minMargin;
-
-        const iconSpan = btn.querySelector(".material-symbols-outlined");
-
-        if (this.containerFilter.classList.contains("collapsed")) {
-          this.containerFilter.classList.remove("collapsed");
-          this.containerFilter.style.height = "";
-          this.containerFilter.style.overflow = "";
-          if (iconSpan) {
-            iconSpan.textContent = "keyboard_double_arrow_down";
-            iconSpan.classList.remove("rotated");
-          }
-        } else {
-          // ocultar contenido excepto el mismo botón y márgenes mínimos
-          this.containerFilter.classList.add("collapsed");
-          this.containerFilter.style.height = `${targetHeight}px`;
-          this.containerFilter.style.overflow = "hidden";
-          if (iconSpan) {
-            iconSpan.textContent = "keyboard_double_arrow_right";
-            iconSpan.classList.add("rotated");
-          }
-        }
       });
+
+    document.getElementById("btn_new")?.addEventListener("click", () => {
+      window.location.href = `productos.php?title=Ficha de producto`;
+    });
 
     Utils.attachAutocomplete(
       "categoria_input",
@@ -146,13 +116,41 @@ class InventarioManager {
     );
   }
 
+  filterCollapse() {
+    const btn = document.getElementById("btn_toggle_filters");
+    if (!btn) return;
+
+    const minMargin = 35; // margen mínimo entre botón y contenido
+    const targetHeight = btn.offsetHeight + minMargin;
+
+    const iconSpan = btn.querySelector(".material-symbols-outlined");
+
+    if (this.containerFilter.classList.contains("collapsed")) {
+      this.containerFilter.classList.remove("collapsed");
+      this.containerFilter.style.height = "";
+      this.containerFilter.style.overflow = "";
+      if (iconSpan) {
+        iconSpan.textContent = "keyboard_double_arrow_up";
+        iconSpan.classList.remove("rotated");
+      }
+    } else {
+      // ocultar contenido excepto el mismo botón y márgenes mínimos
+      this.containerFilter.classList.add("collapsed");
+      this.containerFilter.style.height = `${targetHeight}px`;
+      this.containerFilter.style.overflow = "hidden";
+      if (iconSpan) {
+        iconSpan.textContent = "keyboard_double_arrow_right";
+        iconSpan.classList.add("rotated");
+      }
+    }
+  }
+
   /*
    * Carga los productos desde el backend y renderiza la tabla.
    * @param {number} page - Número de página para la paginación (opcional, por defecto 1).
    */
   async loadProductos(page = 1) {
     try {
-      Utils.showSpinner();
 
       const params = new URLSearchParams();
       params.set("pagina", page);
@@ -189,6 +187,8 @@ class InventarioManager {
       document.querySelectorAll(".real-content").forEach((real) => {
         real.style.display = "block";
       });
+
+
     }
   }
 
@@ -234,24 +234,20 @@ class InventarioManager {
               `<button class="btn btn-sm btn-danger btn-delete round-4 border-0" data-id="${r.id}" ><i class="material-symbols-rounded">delete</i></button>`,
             );
           return `
-        <tr data-id="${id}"">
-          <td class="align-middle d-none d-sm-table-cell" 
-            data-label="Cédula"><code>${r.codigo || ""}</code></td>
-          <td class="align-middle d-none d-sm-table-cell" 
-            data-label="Nombre">${Utils.escapeHtml(r.nombre) || ""}</td>
+        <tr data-id="${id}">
+          <td class="align-middle" data-label="Código"><code>${r.codigo || ""}</code></td>
+          <td class="align-middle" data-label="Nombre">${Utils.escapeHtml(r.nombre) || ""}</td>
           <td class="align-middle" data-label="Tipo">${badgeTipo}</td>
           <td class="align-middle" data-label="Categoría">${Utils.escapeHtml(r.categoria) || ""}</td>
           <td class="align-middle" data-label="Marca">${Utils.escapeHtml(r.marca) || ""}</td>
           <td class="align-middle" data-label="Stock" style="text-align: right;">${Utils.formatNumbers(r.stock, 2)}</td>
-          <td class="align-middle" data-label="Stock">${badgeStock}</td>
+          <td class="align-middle" data-label="Estado">${badgeStock}</td>
           <td class="align-middle" data-label="Precio de Compra" style="text-align: right;">${Utils.formatNumbers(r.precio_compra, 2) || ""}</td>
-
           <td class="align-middle" data-label="Utilidad Absoluta" style="text-align: right;">${Utils.formatNumbers(r.utilidad_absoluta, 2) || ""}</td>
           <td class="align-middle" data-label="Margen sobre Ventas" style="text-align: right;">${Utils.formatNumbers(r.margen_sobre_venta, 2) || ""}</td>
           <td class="align-middle" data-label="Precio de Venta" style="text-align: right;">${Utils.formatNumbers(r.precio_venta, 2) || ""}</td>
-          <td>
-            <div class="btn-group btn-group-sm" 
-              role="group" aria-label="Acciones de Medicos">
+          <td class="align-middle" data-label="Acciones">
+            <div class="btn-group btn-group-sm" role="group" aria-label="Acciones de Producto">
               ${btns.join("")}
             </div>
           </td>
@@ -320,7 +316,7 @@ class InventarioManager {
         );
         const jsonString = JSON.stringify(miObjeto);
         const urlSegura = encodeURIComponent(jsonString);
-        window.location.href = `productos.php?title=Editar Producto&datos=${urlSegura}`;
+        window.location.href = `productos.php?title=Ficha de Producto&datos=${urlSegura}`;
       }),
     );
 

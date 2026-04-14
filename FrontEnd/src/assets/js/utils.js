@@ -45,13 +45,29 @@ class Utils {
         document.getElementById("spinner-carga") ||
         document.getElementById("spinner");
       if (el) {
-        el.fadeIn();
+        el.fadeIn = el.fadeIn || function () { el.style.opacity = 1; };
         el.style.display = "block";
       }
     } catch (e) {
       console.error("showSpinner error", e.message);
     }
+  }
 
+  /**
+ * Oculta el spinner de carga si existe.
+ *
+ * Uso típico: llamar después de completar una petición asíncrona.
+ */
+  static hideSpinner() {
+    try {
+      const el =
+        document.getElementById("spinner-carga") ||
+        document.getElementById("spinner");
+      if (el) {
+        el.fadeOut = el.fadeOut || function () { el.style.opacity = 0; };
+        el.style.display = "none";
+      }
+    } catch (e) { }
   }
 
   /**
@@ -75,7 +91,7 @@ class Utils {
   /** 
    * Configura el toast para que sea mas rapido y no se bloquee
    */
-  static setupToast() {
+  static setupToast(time = 1500) {
     return Swal.mixin({
       toast: true,
       position: "top-end",
@@ -84,7 +100,7 @@ class Utils {
         popup: "colored-toast",
       },
       showConfirmButton: false,
-      timer: 3000,
+      timer: time,
       timerProgressBar: true,
       didOpen: (toast) => {
         toast.addEventListener("mouseenter", Swal.stopTimer);
@@ -93,19 +109,7 @@ class Utils {
     });
   }
 
-  /**
-   * Oculta el spinner de carga si existe.
-   *
-   * Uso típico: llamar después de completar una petición asíncrona.
-   */
-  static hideSpinner() {
-    try {
-      const el =
-        document.getElementById("spinner-carga") ||
-        document.getElementById("spinner");
-      if (el) el.style.display = "none";
-    } catch (e) { }
-  }
+
 
   /**
    * Muestra un toast breve (auto-dismiss) en pantalla.
@@ -155,8 +159,8 @@ class Utils {
      * @param {string} message - Texto a mostrar en el toast.
      * @param {"success"|"warning"|"danger"|"error"|string} [type="success"] - Tipo de toast.
      */
-  static sToast(message, type = "success") {
-    this.toast = this.setupToast();
+  static sToast(message, type = "success", time = 1500) {
+    this.toast = this.setupToast(time);
     this.toast.fire({
       icon: type,
       title: message,
@@ -496,13 +500,13 @@ class Utils {
     confirmText = "Sí, eliminar",
     cancelText = "Cancelar",
   ) {
-    Swal.fire({
+    return Swal.fire({
       title: "<strong>" + title + "</strong>",
       html:
         '<h1 class="text-gradient"></h1><p class="mt-3">' + mensaje + "</p>",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
       confirmButtonText: confirmText,
       cancelButtonText: cancelText,
       allowOutsideClick: false,
@@ -802,7 +806,6 @@ class Utils {
       } catch (err) {
         console.error("multi-autocomplete error", err);
       }
-      x1;
     }, 200);
 
     input.addEventListener("input", (e) => {

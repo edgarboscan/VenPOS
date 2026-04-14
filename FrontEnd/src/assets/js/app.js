@@ -280,6 +280,59 @@ $(document).ready(function () {
       }
     }
 
+    function updateCollapsedSubmenuState(parent, open) {
+      parent.classList.toggle("open", open);
+      const trigger = parent.querySelector(":scope > a[aria-haspopup='true']");
+      if (trigger) {
+        trigger.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+    }
+
+    function setupCollapsedFlyouts() {
+      const submenuParents = document.querySelectorAll(
+        ".sidebar-menu .has-children",
+      );
+      submenuParents.forEach((parent) => {
+        parent.addEventListener("mouseenter", function () {
+          if (body.classList.contains("sidebar-collapsed") && !isMobile()) {
+            updateCollapsedSubmenuState(parent, true);
+          }
+        });
+
+        parent.addEventListener("mouseleave", function () {
+          if (body.classList.contains("sidebar-collapsed") && !isMobile()) {
+            updateCollapsedSubmenuState(parent, false);
+          }
+        });
+
+        parent.addEventListener("focusin", function () {
+          if (body.classList.contains("sidebar-collapsed") && !isMobile()) {
+            updateCollapsedSubmenuState(parent, true);
+          }
+        });
+
+        parent.addEventListener("focusout", function (event) {
+          if (body.classList.contains("sidebar-collapsed") && !isMobile()) {
+            if (!parent.contains(event.relatedTarget)) {
+              updateCollapsedSubmenuState(parent, false);
+            }
+          }
+        });
+      });
+
+      document.addEventListener("click", function (event) {
+        if (!body.classList.contains("sidebar-collapsed") || isMobile()) {
+          return;
+        }
+
+        submenuParents.forEach((parent) => {
+          if (!parent.contains(event.target)) {
+            updateCollapsedSubmenuState(parent, false);
+          }
+        });
+      });
+    }
+
     // Evento del botón hamburguesa
     if (toggleBtn) {
       toggleBtn.addEventListener("click", function (e) {
@@ -295,6 +348,8 @@ $(document).ready(function () {
         }
       });
     }
+
+    setupCollapsedFlyouts();
 
     // Cerrar menú al hacer clic en el backdrop
     if (backdrop) {

@@ -5,6 +5,9 @@
   margin: 0.2rem 0 0.2rem 0;
   background: none;
 }
+.sidebar-menu .nav-link {
+  position: relative;
+}
 .sidebar-menu .has-children > .nav-link {
   position: relative;
 }
@@ -14,6 +17,37 @@
   color: var(--primary-color);
   transition: transform 0.2s;
 }
+
+/* Tooltip propio para iconos en sidebar colapsada */
+.sidebar-collapsed .sidebar-menu .nav-link[data-tooltip]:hover::after,
+.sidebar-collapsed .sidebar-menu .nav-link[data-tooltip]:focus::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 0.5rem);
+  transform: translateY(-50%);
+  white-space: nowrap;
+  background: rgba(15, 23, 42, 0.96);
+  color: #ffffff;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.35rem;
+  font-size: 0.85rem;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+  z-index: 2000;
+  opacity: 1;
+}
+.sidebar-collapsed .sidebar-menu .nav-link[data-tooltip]:hover::before,
+.sidebar-collapsed .sidebar-menu .nav-link[data-tooltip]:focus::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: rgba(15, 23, 42, 0.96);
+  z-index: 2001;
+}
+
 .sidebar-menu .has-children > .submenu {
   display: none;
 }
@@ -25,10 +59,14 @@
 }
 .sidebar-menu .submenu .nav-link {
   background: none;
-  color: var(--dark-color);
+  color: #ffffff;
   padding-left: 2.5rem;
   border-radius: 0 30px 30px 0;
   font-size: 0.97rem;
+}
+.sidebar-menu .submenu .nav-link:hover,
+.sidebar-menu .submenu .nav-link:focus {
+  color: #ffffff;
 }
 .sidebar-menu .submenu .nav-link.active {
   background: linear-gradient(
@@ -37,4 +75,87 @@
     var(--secondary-color)
   );
   color: white;
+}
+
+/* Mantener submenús visibles cuando la barra está colapsada */
+.sidebar-collapsed .sidebar {
+  overflow: visible !important;
+}
+
+.sidebar-collapsed .sidebar-menu,
+.sidebar-collapsed .sidebar-menu .has-children {
+  overflow: visible !important;
+  position: relative;
+  z-index: 1000;
+}
+
+.sidebar-collapsed .sidebar-menu .has-children > .submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  min-width: 220px;
+  max-width: 260px;
+  background: rgba(15, 23, 42, 0.98);
+  border-radius: 0 10px 10px 0;
+  padding: 0.5rem 0;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
+  display: none;
+  z-index: 2000;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 0.18s ease,
+    visibility 0.18s ease;
+}
+
+.sidebar-collapsed .sidebar-menu .has-children.open > .submenu,
+.sidebar-collapsed .sidebar-menu .has-children:hover > .submenu,
+.sidebar-collapsed .sidebar-menu .has-children:focus-within > .submenu {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.sidebar-collapsed .sidebar-menu .submenu {
+  padding-left: 0;
+  margin: 0.25rem 0 0 0;
+  min-width: 220px;
+}
+
+.sidebar-collapsed .sidebar-menu .submenu .menu-text {
+  display: inline-block !important;
+  margin-left: 0.25rem;
+  font-size: 0.95rem;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.sidebar-collapsed .sidebar-menu .submenu .nav-link {
+  padding: 0.6rem 1rem;
+  margin: 0 0.35rem;
+  justify-content: flex-start;
+  color: #ffffff !important;
+  background: rgba(43, 59, 83, 0.92) !important;
+  border-radius: 8px;
+}
+
+.sidebar-collapsed .sidebar-menu .submenu .nav-link:hover,
+.sidebar-collapsed .sidebar-menu .submenu .nav-link:focus {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+
+.sidebar-collapsed .sidebar-menu .submenu .nav-link i,
+.sidebar-collapsed .sidebar-menu .submenu .nav-link .material-symbols-outlined {
+  color: #ffffff !important;
+}
+
+.sidebar-collapsed .sidebar-menu .submenu .nav-link i,
+.sidebar-collapsed .sidebar-menu .submenu .nav-link .material-symbols-outlined {
+  width: auto;
+  margin-right: 0.75rem;
+}
+
+.sidebar-collapsed .sidebar-menu .has-children > .nav-link .submenu-arrow {
+  display: none;
 }

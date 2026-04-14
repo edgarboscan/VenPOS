@@ -9,7 +9,7 @@ require_login();
 
 $user = getCurrentUser();
 
-
+$currentPage = $_SERVER['PHP_SELF'] ?? basename(__FILE__);
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -73,21 +73,44 @@ $user = getCurrentUser();
             <div id="header-container" class="header-container">
               <div class="wrapper d-flex justify-content-between align-items-center">
                 <div class="header-control one">
-                  <h1 class="header-title">Ficha Producto</h1>
+                  <nav style="--bs-breadcrumb-divider: 
+                    url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='currentColor'/%3E%3C/svg%3E&#34;);" aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                      <li class="breadcrumb-item ">
+                        <a href="
+                          <?php
+                          echo 'http://' .  $_SERVER["HTTP_HOST"] . "/FrontEnd/src/pages/home.php?title=Home"; ?>
+                              ">Home</a>
+                      </li>
+                      <li class="breadcrumb-item ">
+                        <a href="
+                          <?php
+                          echo 'http://' .  $_SERVER["HTTP_HOST"] . "/FrontEnd/src/pages/Inventario/index.php?title=Productos"; ?>
+                              ">Inventario</a>
+                      </li>
+                      <li class="breadcrumb-item active" aria-current="page">
+
+                        <a href="<?php echo 'http://' . $_SERVER["HTTP_HOST"] . $currentPage . '?title=Ficha%20de%20producto'; ?>
+                              ">
+                          <?php echo ucfirst(explode('.', $page)[0]);  ?>
+                        </a>
+                      </li>
+                    </ol>
+                  </nav>
                 </div>
 
                 <div class="header-control two">
                   <button
                     type="button"
-                    id="btn_add_producto"
-                    class="btn btn-outline-success btn-sm"
-                    title="Agregar nuevo producto"
+                    id="btn_new"
+                    class="btn btn-outline-info btn-sm"
+                    title="Nuevo producto"
                     style="z-index: 16001;">
                     <div class="parent-container">
-                      <span class="material-symbols-outlined">add</span><label class="header-title">&nbsp;Agregar</label>
+                      <span class="material-symbols-outlined">save</span><label class="header-title">&nbsp;Nuevo </label>
                     </div>
                   </button>
-                  <button
+                  <!-- <button
                     type="button"
                     id="btn_cancelar"
                     class="btn btn-outline-danger btn-sm"
@@ -96,7 +119,7 @@ $user = getCurrentUser();
                     <div class="parent-container">
                       <span class="material-symbols-outlined">cancel</span><label class="header-title">&nbsp;Cancelar</label>
                     </div>
-                  </button>
+                  </button> -->
                   <button
                     type="button"
                     id="btn_regresar"
@@ -108,6 +131,8 @@ $user = getCurrentUser();
                     </div>
                   </button>
                 </div>
+              </div>
+            </div>
 
           </section>
 
@@ -225,7 +250,7 @@ $user = getCurrentUser();
 
                     <div class="checkbox-container align-content-start">
                       <div class="checkbox-wrapper">
-                        <input class="checkbox" id="checkboxProductoActivo" type="checkbox" />
+                        <input class="checkbox" id="checkboxProductoActivo" type="checkbox" checked />
                         <label class="checkbox-label" for="checkboxProductoActivo">
                           <div class="checkbox-flip">
                             <div class="checkbox-front">
@@ -324,6 +349,7 @@ $user = getCurrentUser();
           </section>
 
           <section class="card-section mt-4" aria-label="Tabla de codigos y precios">
+            <!-- Codios -->
             <div class="card-container">
               <div class="card">
                 <div class="card-header">
@@ -366,6 +392,7 @@ $user = getCurrentUser();
               </div>
 
             </div>
+            <!-- Precios -->
             <div class="card-container">
               <div class="card">
                 <div class="card-header">
@@ -413,13 +440,60 @@ $user = getCurrentUser();
                 </div>
               </div>
             </div>
+            <!-- Partes -->
+            <div class="card-container">
+              <div class="card">
+                <div class="card-header">
+                  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <h5 class="mb-0">Partes</h5>
+                    <button id="btn_add_Partes"
+                      class="btn btn-outline-primary btn-sm">
+                      <div class="parent-container">
+                        <span class="material-symbols-outlined">add</span> Agregar Parte
+                      </div>
+                    </button>
+                  </div>
+                </div>
+                <div class="card-body p-0">
+                  <div class="tables-container">
+                    <div class="datagrid">
+                      <table id="tabla_partes" class="table table-striped table-hover" style="width:100%">
+                        <thead>
+                          <tr>
+                            <th class="align-middle">Codigo</th>
+                            <th class="align-middle">Descripción</th>
+                            <th class="align-middle">Cantidad</th>
+                            <th class="align-middle">Precio</th>
+                            <th class="align-middle">Precio</th>
+                            <th class="align-middle">Existencias</th>
+
+
+                            <th class="align-middle">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                      </table>
+                      <div id="skPartes" class="skeleton-content">
+                        <div class="skeleton skeleton-text" style="height: 3.5rem; width: 90%; margin: 0 auto 0.5rem; align-content: middle; ">
+                          <div class="text-primary  text-center " style="font-weight: bold; font-size: 2.25rem;clear: both; height: 100%; display: flex; align-items: center; justify-content: center;">Cargando...</div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
           </section>
         </div>
       </div>
     </section>
   </div>
 
-  <script src="../../node_modules/jquery/dist/jquery.js"></script>
+  <script src="../../../node_modules/jquery/dist/jquery.js"></script>
   <!-- <script src="../../../node_modules/jquery/dist/jquery.min.js"></script> -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../../assets/js/app.js"></script>
@@ -432,10 +506,21 @@ $user = getCurrentUser();
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <div id="spinner-carga" hidden aria-hidden="true"
-    style="position: fixed;top: 0;left: 0;width: 100vw;height: 100vh;background: rgba(255,255,255,0.7);z-index: 9999;display:flex;align-items:center;justify-content:center;">
-    <div class="spinner-border text-primary" role="status" style="width:4rem;height:4rem"><span
-        class="sr-only">Cargando...</span></div>
+  <div id="spinner-carga" style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(255, 255, 255, 0.7);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+    <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem">
+      <span class="sr-only">Cargando...</span>
+    </div>
   </div>
 </body>
 

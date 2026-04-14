@@ -125,7 +125,7 @@ class LoginManager {
           data =
             typeof data.resultado === "string" ?
               JSON.parse(data.resultado)
-            : data.resultado;
+              : data.resultado;
         } catch (e) {
           // si falla el parseo dejamos data como estaba; más adelante fallará
           console.warn("No se pudo parsear data.resultado", e);
@@ -196,14 +196,16 @@ class LoginManager {
           1200,
         );
 
-        const overlay = document.createElement("div");
-        overlay.className = "page-overlay success";
-        overlay.innerHTML = `<div class="center"><h2>¡Ingreso exitoso!</h2></div>`;
-        document.body.appendChild(overlay);
-        requestAnimationFrame(() => {
-          document.body.classList.add("page-exit");
-          overlay.classList.add("visible");
-        });
+        // const overlay = document.createElement("div");
+        // overlay.className = "page-overlay success";
+        // overlay.innerHTML = `<div class="center"><h2>¡Ingreso exitoso!</h2></div>`;
+        // document.body.appendChild(overlay);
+        // requestAnimationFrame(() => {
+        //   document.body.classList.add("page-exit");
+        //   overlay.classList.add("visible");
+        // });
+
+        Utils.sToast("¡Ingreso exitoso!", "success", 1000);
 
         // esperar un poco para simular redirección
         setTimeout(() => {
@@ -221,7 +223,7 @@ class LoginManager {
           msg =
             typeof data.error === "string" ?
               data.error
-            : JSON.stringify(data.error);
+              : JSON.stringify(data.error);
         }
         throw new Error(msg);
       }
@@ -322,7 +324,7 @@ class LoginManager {
         this.eye.innerHTML =
           type === "password" ?
             '<span class="material-symbols-outlined">visibility</span>'
-          : '<span class="material-symbols-outlined">visibility_off</span>';
+            : '<span class="material-symbols-outlined">visibility_off</span>';
       });
     }
 
